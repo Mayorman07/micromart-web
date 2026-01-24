@@ -19,42 +19,46 @@ const Login = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Handle Form Submit
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setStatus("loading");
-        setErrorMessage("");
+  // Handle Form Submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("loading");
+    setErrorMessage("");
 
-        try {
-            // 🚀 sending request to Gateway
-            // Note: URL is /users/users/login based on your Gateway routes
-            const response = await axios.post(
-                "http://127.0.0.1:7082/users/users/login", 
-                formData
-            );
+    try {
+        const response = await axios.post(
+            "http://127.0.0.1:7082/users/users/login", 
+            formData
+        );
 
-            console.log("✅ Login Success!", response);
-            console.log("🔑 Headers:", response.headers);
+        console.log("✅ Login Success!", response);
 
-            // TODO: We will extract the token here in the next step
-            // const token = response.headers["token"] || response.headers["authorization"];
+        // 1. Extract Token from the Response Body (Data)
+        const token = response.data.token;
+        const userId = response.data.userId; // Assuming you send this too
 
-            setStatus("success");
-            
-            // Temporary alert until we finish the redirect logic
-            alert("Login Successful! Check Console for Token.");
-
-        } catch (error) {
-            console.error("❌ Login Failed", error);
-            setStatus("error");
-            
-            if (error.response && error.response.status === 401) {
-                setErrorMessage("Invalid email or password.");
-            } else {
-                setErrorMessage("Something went wrong. Is the backend running?");
-            }
+        if (!token) {
+            throw new Error("Token missing from response");
         }
-    };
+
+        // 2. Save to Local Storage (Browser Memory)
+        localStorage.setItem("token", token);
+        localStorage.setItem("userId", userId);
+
+        setStatus("success");
+        
+        // 3. Redirect to the Dashboard (Home)
+        // We will build this page in a second!
+        setTimeout(() => {
+            navigate("/dashboard");
+        }, 1000);
+
+    } catch (error) {
+        console.error("❌ Login Failed", error);
+        setStatus("error");
+        setErrorMessage("Invalid email or password.");
+    }
+};
 
     return (
         <div style={styles.container}>
