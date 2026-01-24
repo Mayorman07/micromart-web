@@ -116,6 +116,10 @@ const Signup = () => {
                     <select name="gender" onChange={handleChange} style={inputStyle}>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
+                        <option value="Non binary">Non binary</option>
+                        <option value="Prefer not to say">Prefer not to say</option>
+                        <option value="Transgender">Transgender</option>
+                        <option value="Cisgender">Cisgender</option>
                     </select>
 
                     <input name="password" type="password" placeholder="Password" onChange={handleChange} required style={inputStyle} />
@@ -166,7 +170,8 @@ const inputStyle = {
     border: "1px solid #ccc",
     fontSize: "14px",
     boxSizing: "border-box",
-    backgroundColor: "white"
-};
+    backgroundColor: "white",
+    color: "#333" // 👈 ADD THIS LINE (Dark text)
+};;
 
 export default Signup;
