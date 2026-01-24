@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "./VerifyEmail.css"; // 👈 Importing the Da Vinci Styles
+import "./VerifyEmail.css"; 
 
 const Login = () => {
     const navigate = useNavigate();
