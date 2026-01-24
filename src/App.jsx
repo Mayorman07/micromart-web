@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import VerifyEmail from "./VerifyEmail";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
+import Signup from "./Signup";
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
         <Route path="/verify" element={<VerifyEmail />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/" element={<h1>Welcome to Micromart</h1>} />
+        <Route path="/signup" element={<Signup />} />
       </Routes>
     </BrowserRouter>
   );
