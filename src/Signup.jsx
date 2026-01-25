@@ -91,7 +91,6 @@ const Signup = () => {
         );
     }
 
-    // ✨ RENDER FORM STATE
     return (
         <div className="verify-container" style={{overflowY: "auto"}}>
             <div className="verify-card" style={{ maxWidth: "600px", marginTop: "50px", marginBottom: "50px" }}>
@@ -168,7 +167,7 @@ const inputStyle = {
     fontSize: "14px",
     boxSizing: "border-box",
     backgroundColor: "white",
-    color: "#333" // 👈 ADD THIS LINE (Dark text)
+    color: "#333"
 };;
 
 export default Signup;
