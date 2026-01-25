@@ -92,7 +92,7 @@ const Login = () => {
                 </div>
 
                 <h2 className="title" style={{ marginTop: "10px" }}>Welcome Back</h2>
-                <p className="subtitle" style={{ marginBottom: "25px" }}>Enter your credentials to access Micromart.</p>
+                <p className="subtitle" style={{ marginBottom: "25px" }}>Enter your login details to access Micromart.</p>
                 
                 <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
                     
