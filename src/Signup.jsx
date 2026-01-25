@@ -54,7 +54,6 @@ const Signup = () => {
         try {
             await axios.post("http://127.0.0.1:7082/users/users/create", formData);
             setStatus("success");
-            // 🛑 REMOVED THE TIMEOUT: Now it waits for the user!
         } catch (error) {
             console.error("Signup Failed", error);
             setStatus("error");
@@ -62,7 +61,6 @@ const Signup = () => {
         }
     };
 
-    // ✨ RENDER SUCCESS STATE (Check Email Page)
     if (status === "success") {
         return (
             <div className="verify-container">
