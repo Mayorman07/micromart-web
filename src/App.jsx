@@ -4,6 +4,8 @@ import Login from "./Login";
 import Dashboard from "./Dashboard";
 import Signup from "./Signup";
 import ResetPassword from "./ResetPassword";
+import ForgotPassword from "./ForgotPassword";
+
 
 function App() {
   return (
