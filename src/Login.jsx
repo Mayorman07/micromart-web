@@ -13,7 +13,7 @@ const Login = () => {
         password: ""
     });
 
-    // ❄️ SNOWFLAKES: Because even logins should be magical
+    // ❄️ SNOWFLAKES logic
     const snowflakes = useMemo(() => {
         return [...Array(50)].map((_, i) => ({
             id: i,
@@ -40,19 +40,16 @@ const Login = () => {
                 formData
             );
 
-            // Extract Token
             const token = response.data.token;
             const userId = response.data.userId;
 
             if (!token) throw new Error("Token missing");
 
-            // Save to Browser
             localStorage.setItem("token", token);
             localStorage.setItem("userId", userId);
 
             setStatus("success");
             
-            // Redirect to Dashboard
             setTimeout(() => {
                 navigate("/dashboard");
             }, 1000);
@@ -120,6 +117,21 @@ const Login = () => {
                         />
                     </div>
 
+                    {/* 👇 NEW: Forgot Password Link */}
+                    <div style={{ textAlign: "right", marginTop: "-5px" }}>
+                        <span 
+                            onClick={() => navigate("/forgot-password")}
+                            style={{ 
+                                color: "#0072ff", 
+                                fontSize: "14px", 
+                                cursor: "pointer", 
+                                fontWeight: "600" 
+                            }}
+                        >
+                            Forgot Password?
+                        </span>
+                    </div>
+
                     {status === "error" && (
                         <p style={{ color: "#dc2626", fontSize: "14px", fontWeight: "bold", background: "rgba(220, 38, 38, 0.1)", padding: "10px", borderRadius: "8px" }}>
                             ⚠️ {errorMessage}
@@ -130,7 +142,7 @@ const Login = () => {
                         type="submit" 
                         disabled={status === "loading" || status === "success"}
                         className="login-btn"
-                        style={{ marginTop: "10px" }}
+                        style={{ marginTop: "5px" }}
                     >
                         {status === "loading" ? "Authenticating..." : status === "success" ? "Success! 🔓" : "Sign In"}
                     </button>
@@ -155,8 +167,8 @@ const glassInputStyle = {
     width: "100%",
     padding: "14px 16px",
     borderRadius: "12px",
-    border: "1px solid rgba(255, 255, 255, 0.3)", // Subtle border
-    background: "rgba(255, 255, 255, 0.6)", // Semi-transparent white
+    border: "1px solid rgba(255, 255, 255, 0.3)",
+    background: "rgba(255, 255, 255, 0.6)",
     fontSize: "16px",
     outline: "none",
     transition: "all 0.3s ease",
