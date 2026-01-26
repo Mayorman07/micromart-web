@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Snowfall from "./components/Snowfall"; // 👈 Import the effect (adjust path if needed)
 import "./VerifyEmail.css"; 
 
 const Login = () => {
@@ -12,18 +13,6 @@ const Login = () => {
         email: "",
         password: ""
     });
-
-    // ❄️ SNOWFLAKES logic
-    const snowflakes = useMemo(() => {
-        return [...Array(50)].map((_, i) => ({
-            id: i,
-            left: Math.random() * 100,
-            size: Math.random() * 4 + 2,
-            duration: Math.random() * 5 + 5,
-            delay: Math.random() * 5,
-            opacity: Math.random() * 0.5 + 0.3
-        }));
-    }, []);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -63,23 +52,10 @@ const Login = () => {
 
     return (
         <div className="verify-container">
-            {/* ❄️ Render Snowflakes */}
-            {snowflakes.map((flake) => (
-                <div 
-                    key={flake.id}
-                    className="snowflake"
-                    style={{
-                        left: `${flake.left}vw`,
-                        width: `${flake.size}px`,
-                        height: `${flake.size}px`,
-                        animation: `snowfall ${flake.duration}s linear infinite`,
-                        animationDelay: `-${flake.delay}s`,
-                        opacity: flake.opacity
-                    }}
-                />
-            ))}
+            {/* ❄️ The Magic Effect */}
+            <Snowfall />
 
-            <div className="verify-card" style={{ maxWidth: "400px" }}>
+            <div className="verify-card" style={{ maxWidth: "400px", zIndex: 1, position: "relative" }}>
                 
                 {/* 🔐 Header Icon */}
                 <div className="icon-circle" style={{ background: "rgba(255, 255, 255, 0.2)", backdropFilter: "blur(10px)" }}>
@@ -117,7 +93,7 @@ const Login = () => {
                         />
                     </div>
 
-                    {/* 👇 NEW: Forgot Password Link */}
+                    {/* 👇 Forgot Password Link */}
                     <div style={{ textAlign: "right", marginTop: "-5px" }}>
                         <span 
                             onClick={() => navigate("/forgot-password")}
@@ -125,8 +101,11 @@ const Login = () => {
                                 color: "#0072ff", 
                                 fontSize: "14px", 
                                 cursor: "pointer", 
-                                fontWeight: "600" 
+                                fontWeight: "600",
+                                transition: "color 0.2s"
                             }}
+                            onMouseOver={(e) => e.target.style.color = "#0056b3"}
+                            onMouseOut={(e) => e.target.style.color = "#0072ff"}
                         >
                             Forgot Password?
                         </span>
@@ -162,7 +141,7 @@ const Login = () => {
     );
 };
 
-// 🎨 Custom Glass Input Styles
+// 🎨 Styles
 const glassInputStyle = {
     width: "100%",
     padding: "14px 16px",
