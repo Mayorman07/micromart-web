@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Snowfall from "./components/Snowfall"; // ❄️ Import Snowflakes
 import "./VerifyEmail.css";
 
 const NIGERIAN_STATES = [
@@ -16,7 +17,7 @@ const Signup = () => {
     const [status, setStatus] = useState("idle");
     const [errorMessage, setErrorMessage] = useState("");
     
-    // 👁️ NEW: State for password visibility
+    // 👁️ State for password visibility
     const [showPassword, setShowPassword] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -49,12 +50,12 @@ const Signup = () => {
         });
     };
 
-    // 👁️ NEW: Function to show password for 2 seconds
+    // 👁️ Function to show password for 2 seconds
     const togglePassword = () => {
         setShowPassword(true);
         setTimeout(() => {
             setShowPassword(false);
-        }, 2000); // 2000ms = 2 seconds
+        }, 2000); 
     };
 
     const handleSubmit = async (e) => {
@@ -75,7 +76,10 @@ const Signup = () => {
     if (status === "success") {
         return (
             <div className="verify-container">
-                <div className="verify-card">
+                {/* ❄️ Snowflakes for Success Screen too */}
+                <Snowfall />
+
+                <div className="verify-card" style={{ zIndex: 1 }}>
                     <div className="icon-circle">
                         <svg className="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
@@ -99,7 +103,10 @@ const Signup = () => {
 
     return (
         <div className="verify-container" style={{overflowY: "auto"}}>
-            <div className="verify-card" style={{ maxWidth: "600px", marginTop: "50px", marginBottom: "50px" }}>
+            {/* ❄️ Snowflakes Background */}
+            <Snowfall />
+
+            <div className="verify-card" style={{ maxWidth: "600px", marginTop: "50px", marginBottom: "50px", zIndex: 1, position: "relative" }}>
                 
                 <h2 className="title">Create Account </h2>
                 
@@ -127,15 +134,15 @@ const Signup = () => {
                         <option value="Cisgender">Cisgender</option>
                     </select>
 
-                    {/* 👁️ NEW: Password Input Container */}
+                    {/* 👁️ Password Input */}
                     <div style={{ position: "relative" }}>
                         <input 
                             name="password" 
-                            type={showPassword ? "text" : "password"} // Switches type
+                            type={showPassword ? "text" : "password"} 
                             placeholder="Password" 
                             onChange={handleChange} 
                             required 
-                            style={{ ...inputStyle, paddingRight: "40px" }} // Make room for icon
+                            style={{ ...inputStyle, paddingRight: "40px" }} 
                         />
                         <span 
                             onClick={togglePassword}
