@@ -3,6 +3,7 @@ import VerifyEmail from "./VerifyEmail";
 import Login from "./Login";
 import Dashboard from "./Dashboard";
 import Signup from "./Signup";
+import ResetPassword from "./ResetPassword";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<h1>Welcome to Micromart</h1>} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </BrowserRouter>
   );
