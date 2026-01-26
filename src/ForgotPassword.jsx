@@ -13,7 +13,6 @@ const ForgotPassword = () => {
         setStatus("loading");
 
         try {
-            // 👇 Call your backend to trigger the email
             await axios.post("http://127.0.0.1:7082/users/users/forgot-password", { email });
             setStatus("success");
         } catch (error) {
