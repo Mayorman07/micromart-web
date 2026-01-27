@@ -13,7 +13,7 @@ const ForgotPassword = () => {
         setStatus("loading");
 
         try {
-            await axios.post("http://127.0.0.1:7082/users/users/forgot-password", { email });
+            await axios.post("http://127.0.0.1:7082/users/password-reset/request", { email });
             setStatus("success");
         } catch (error) {
             console.error(error);

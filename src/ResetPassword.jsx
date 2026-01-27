@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./VerifyEmail.css"; // We can reuse your card styles
+import "./VerifyEmail.css"; 
 
 const ResetPassword = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     
-    // 1️⃣ Extract token from URL (e.g., ?token=xyz)
     const token = searchParams.get("token");
 
     const [passwords, setPasswords] = useState({ newPassword: "", confirmPassword: "" });
