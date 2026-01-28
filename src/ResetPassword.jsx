@@ -14,7 +14,6 @@ const ResetPassword = () => {
     const [message, setMessage] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
-    // 👇 1. REAL-TIME VALIDATION RULES
     const validations = {
         hasLower: /[a-z]/.test(passwords.newPassword),
         hasUpper: /[A-Z]/.test(passwords.newPassword),
