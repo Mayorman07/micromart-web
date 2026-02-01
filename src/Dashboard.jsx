@@ -10,7 +10,7 @@ const Dashboard = () => {
         const token = localStorage.getItem("token");
         
         if (!token) {
-            // 2. If no token, kick them back to login!
+            // 2. If no token, send them back to login!
             navigate("/login");
         } else {
             setUserToken(token);
