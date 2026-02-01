@@ -6,7 +6,6 @@ import Signup from "./Signup";
 import ResetPassword from "./ResetPassword";
 import ForgotPassword from "./ForgotPassword";
 
-
 function App() {
   return (
     <BrowserRouter>
