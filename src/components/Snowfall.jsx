@@ -1,8 +1,7 @@
 import { useMemo } from "react";
-import "../VerifyEmail.css"; // Ensure this has your .snowflake CSS
+import styles from "./Snowfall.module.css"; 
 
 const Snowfall = () => {
-    // ❄️ SNOWFLAKES Logic
     const snowflakes = useMemo(() => {
         return [...Array(50)].map((_, i) => ({
             id: i,
@@ -19,12 +18,14 @@ const Snowfall = () => {
             {snowflakes.map((flake) => (
                 <div 
                     key={flake.id}
-                    className="snowflake"
+                    // 👇 Use the module class here
+                    className={styles.snowflake}
                     style={{
                         left: `${flake.left}vw`,
                         width: `${flake.size}px`,
                         height: `${flake.size}px`,
-                        animation: `snowfall ${flake.duration}s linear infinite`,
+                        // 👇 Matches the keyframe name in Snowfall.module.css
+                        animation: `${styles.snowfall} ${flake.duration}s linear infinite`, 
                         animationDelay: `-${flake.delay}s`,
                         opacity: flake.opacity
                     }}
