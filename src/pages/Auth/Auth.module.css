@@ -1,55 +1,66 @@
 /* src/pages/Auth/Auth.module.css */
 
+/* 1. The Main Container (Blue Gradient) */
 .authContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    /* The Premium Aqua Gradient from your original file */
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
-    /* Use a gradient or your specific background image here if you have one */
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    position: relative;
-    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden; /* Keeps snowflakes inside */
+    z-index: 999;
 }
 
+/* Background floating glow (Optional visual flair) */
+.authContainer::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: 0;
+}
+
+/* 2. The Glass Card */
 .authCard {
-    background: rgba(255, 255, 255, 0.85); /* Glass effect base */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
     padding: 2.5rem;
-    border-radius: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 400px;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 75, 135, 0.15);
+    width: 90%;
+    max-width: 450px; /* Standard width */
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.6);
-    z-index: 1;
+    z-index: 10;
     position: relative;
+    animation: slideUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* 🔐 Icon Circle */
-.iconCircle {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0 auto 15px auto;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-
+/* 3. Typography & Layout */
 .title {
-    margin-bottom: 0.5rem;
-    color: #1e293b;
-    font-size: 1.8rem;
-    font-weight: 700;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 12px;
 }
 
 .subtitle {
-    margin-bottom: 1.5rem;
+    font-size: 16px;
     color: #64748b;
-    font-size: 0.95rem;
+    margin-bottom: 30px;
+    line-height: 1.5;
 }
 
 .formGroup {
@@ -59,88 +70,7 @@
     text-align: left;
 }
 
-/* 🖊️ The Glass Input Style (Refactored from your inline object) */
-.inputField {
-    width: 100%;
-    padding: 14px 16px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.6);
-    font-size: 16px;
-    outline: none;
-    transition: all 0.3s ease;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-    color: #1e293b;
-    box-sizing: border-box;
-}
-
-.inputField:focus {
-    background: #ffffff;
-    border-color: #0072ff;
-    box-shadow: 0 0 0 4px rgba(0, 114, 255, 0.1);
-}
-
-.submitBtn {
-    width: 100%;
-    padding: 14px;
-    background-color: #0072ff;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1rem;
-    cursor: pointer;
-    font-weight: 600;
-    margin-top: 10px;
-    transition: background 0.2s;
-}
-
-.submitBtn:hover:not(:disabled) {
-    background-color: #0056b3;
-}
-
-.submitBtn:disabled {
-    background-color: #94a3b8;
-    cursor: not-allowed;
-}
-
-.forgotLink {
-    color: #0072ff;
-    font-size: 14px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: color 0.2s;
-    float: right;
-    margin-top: -5px;
-}
-
-.forgotLink:hover {
-    color: #0056b3;
-}
-
-.errorMsg {
-    color: #dc2626;
-    font-size: 14px;
-    font-weight: bold;
-    background: rgba(220, 38, 38, 0.1);
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
-
-.footerText {
-    margin-top: 25px;
-    font-size: 14px;
-    color: #64748b;
-}
-
-.linkSpan {
-    color: #0072ff;
-    cursor: pointer;
-    font-weight: bold;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-}
-
+/* Grid Layout for Signup */
 .signupForm {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -157,38 +87,163 @@
     color: #333;
     font-size: 16px;
     font-weight: bold;
-    margin-top: 10px;
+    margin-top: 5px;
     border-bottom: 1px solid rgba(0,0,0,0.1);
     padding-bottom: 5px;
 }
 
-/* Password Field Wrapper */
+/* 4. Inputs & Buttons */
+.inputField {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+    color: #1e293b;
+    box-sizing: border-box;
+}
+
+.inputField:focus {
+    background: #ffffff;
+    border-color: #0072ff;
+    box-shadow: 0 0 0 4px rgba(0, 114, 255, 0.1);
+}
+
+.submitBtn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    box-shadow: 0 10px 20px rgba(0, 114, 255, 0.2);
+}
+
+.submitBtn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(0, 114, 255, 0.3);
+}
+
+.submitBtn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 5. Icons & Extras */
+.iconCircle {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 20px auto;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
 .passwordWrapper {
     position: relative;
     width: 100%;
 }
 
-/* Eye Icon for Password Visibility */
 .eyeIcon {
     position: absolute;
-    right: 10px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
     font-size: 18px;
-    user-select: none;
-    color: #666;
     background: none;
     border: none;
-    padding: 0;
+    color: #666;
 }
 
-/* Success Message Card overrides */
+.footerText {
+    margin-top: 25px;
+    font-size: 14px;
+    color: #1e293b; /* Darker for better contrast on blue */
+}
+
+.linkSpan {
+    color: #0056b3;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.forgotLink {
+    color: #0056b3;
+    font-size: 14px;
+    font-weight: 600;
+    float: right;
+    cursor: pointer;
+}
+
+.errorMsg {
+    color: #dc2626;
+    font-size: 14px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
 .successMessage {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.6);
     padding: 15px;
     border-radius: 10px;
     margin: 20px 0;
     font-size: 14px;
-    color: #555;
+    color: #333;
+}
+
+/* 6. Animations (Snow & Loader) */
+@keyframes slideUp {
+    0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loader {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 25px auto;
+}
+
+/* IMPORTANT: The Snowflake Class */
+.snowflake {
+    position: absolute;
+    top: -20px;
+    background: white;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 5;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+}
+
+/* We need this keyframe globally available for the inline style animation */
+@keyframes snowfall {
+    0% { transform: translateY(-10vh) translateX(0px); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(110vh) translateX(50px); opacity: 0.2; }
 }

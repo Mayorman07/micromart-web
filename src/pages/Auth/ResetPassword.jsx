@@ -1,9 +1,7 @@
-// src/pages/Auth/ResetPassword.jsx
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Snowfall from "../../components/Snowfall"; 
-// 1. Import the new CSS Module
 import styles from "./Auth.module.css"; 
 
 const ResetPassword = () => {

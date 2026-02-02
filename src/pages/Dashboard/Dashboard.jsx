@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "./Dashboard.module.css";
+// 👇 Import the styles
+import styles from "./Dashboard.module.css"; 
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -22,15 +23,21 @@ const Dashboard = () => {
     };
 
     return (
-        // 2. Use the styles here!
+        // 1. Container gives the blue gradient
         <div className={styles.dashboardContainer}>
-            <h1 className={styles.welcomeText}>MicroMart Dashboard</h1>
             
-            <p>Welcome back! You are logged in.</p>
+            {/* 2. Card gives the glass effect */}
+            <div className={styles.card}>
+                <h1 className={styles.title}>MicroMart Dashboard</h1>
+                <p className={styles.subtitle}>Welcome back! You are securely logged in.</p>
 
-            <button onClick={handleLogout} style={{ marginTop: "20px" }}>
-                Log Out
-            </button>
+                <div style={{ marginTop: "40px" }}>
+                    <button onClick={handleLogout} className={styles.logoutBtn}>
+                        Log Out
+                    </button>
+                </div>
+            </div>
+
         </div>
     );
 };
