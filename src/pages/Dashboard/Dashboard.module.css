@@ -1,0 +1,13 @@
+/* src/pages/Dashboard/Dashboard.module.css */
+.dashboardContainer {
+    padding: 40px;
+    background-color: #f0f8ff; /* AliceBlue - easy to see */
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+}
+
+.welcomeText {
+    color: #2c3e50;
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
