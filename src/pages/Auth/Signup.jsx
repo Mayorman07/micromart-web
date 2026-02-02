@@ -1,8 +1,10 @@
+// src/pages/Auth/Signup.jsx
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Snowfall from "./components/Snowfall"; // ❄️ Import Snowflakes
-import "./VerifyEmail.css";
+import Snowfall from "../../components/Snowfall"; 
+// 1. Import the CSS Module
+import styles from "./Auth.module.css"; 
 
 const NIGERIAN_STATES = [
     "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
@@ -73,27 +75,27 @@ const Signup = () => {
         }
     };
 
+    // ✅ Success View
     if (status === "success") {
         return (
-            <div className="verify-container">
-                {/* ❄️ Snowflakes for Success Screen too */}
+            <div className={styles.authContainer}>
                 <Snowfall />
 
-                <div className="verify-card" style={{ zIndex: 1 }}>
-                    <div className="icon-circle">
-                        <svg className="icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={styles.authCard}>
+                    <div className={styles.iconCircle}>
+                        <svg style={{ color: "#0072ff", width: "35px" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                         </svg>
                     </div>
-                    <h2 className="title">Check your Inbox!</h2>
-                    <p className="subtitle">
+                    <h2 className={styles.title}>Check your Inbox!</h2>
+                    <p className={styles.subtitle}>
                         We have sent a verification link to <br/>
                         <strong>{formData.email}</strong>
                     </p>
-                    <div style={{ background: "rgba(255,255,255,0.5)", padding: "15px", borderRadius: "10px", margin: "20px 0", fontSize: "14px", color: "#555" }}>
+                    <div className={styles.successMessage}>
                         💡 Click the link in that email to activate your account.
                     </div>
-                    <button className="login-btn" onClick={() => navigate("/login")}>
+                    <button className={styles.submitBtn} onClick={() => navigate("/login")}>
                         Proceed to Login Page
                     </button>
                 </div>
@@ -101,31 +103,29 @@ const Signup = () => {
         );
     }
 
+    // 📝 Signup Form View
     return (
-        <div className="verify-container" style={{overflowY: "auto"}}>
-            {/* ❄️ Snowflakes Background */}
+        <div className={styles.authContainer} style={{overflowY: "auto"}}>
             <Snowfall />
 
-            <div className="verify-card" style={{ maxWidth: "600px", marginTop: "50px", marginBottom: "50px", zIndex: 1, position: "relative" }}>
+            <div className={styles.authCard} style={{ maxWidth: "600px", marginTop: "20px" }}>
                 
-                <h2 className="title">Create Account </h2>
-                
-                <p className="subtitle">Join Micromart today.</p>
+                <h2 className={styles.title}>Create Account</h2>
+                <p className={styles.subtitle}>Join Micromart today.</p>
 
-                <form onSubmit={handleSubmit} style={{ textAlign: "left", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                {/* Using the Grid Layout from CSS Module */}
+                <form onSubmit={handleSubmit} className={styles.signupForm}>
                     
-                    {/* Personal Details */}
-                    <div style={{ gridColumn: "span 2", color: "#333", fontSize: "16px" }}>
-                        <strong>Personal Details</strong>
-                    </div>
+                    {/* Personal Details Section */}
+                    <div className={styles.sectionTitle}>Personal Details</div>
                     
-                    <input name="firstName" placeholder="First Name" onChange={handleChange} required style={inputStyle} />
-                    <input name="lastName" placeholder="Last Name" onChange={handleChange} required style={inputStyle} />
+                    <input name="firstName" placeholder="First Name" onChange={handleChange} required className={styles.inputField} />
+                    <input name="lastName" placeholder="Last Name" onChange={handleChange} required className={styles.inputField} />
                     
-                    <input name="email" type="email" placeholder="Email" onChange={handleChange} required style={inputStyle} />
-                    <input name="mobileNumber" placeholder="Mobile Number" onChange={handleChange} required style={inputStyle} />
+                    <input name="email" type="email" placeholder="Email" onChange={handleChange} required className={styles.inputField} />
+                    <input name="mobileNumber" placeholder="Mobile Number" onChange={handleChange} required className={styles.inputField} />
 
-                    <select name="gender" onChange={handleChange} style={inputStyle}>
+                    <select name="gender" onChange={handleChange} className={styles.inputField}>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                         <option value="Non binary">Non binary</option>
@@ -134,43 +134,34 @@ const Signup = () => {
                         <option value="Cisgender">Cisgender</option>
                     </select>
 
-                    {/* 👁️ Password Input */}
-                    <div style={{ position: "relative" }}>
+                    {/* 👁️ Password Input with Eye Icon */}
+                    <div className={styles.passwordWrapper}>
                         <input 
                             name="password" 
                             type={showPassword ? "text" : "password"} 
                             placeholder="Password" 
                             onChange={handleChange} 
                             required 
-                            style={{ ...inputStyle, paddingRight: "40px" }} 
+                            className={styles.inputField}
+                            style={{ paddingRight: "40px" }} 
                         />
-                        <span 
+                        <button 
+                            type="button"
                             onClick={togglePassword}
-                            style={{
-                                position: "absolute",
-                                right: "10px",
-                                top: "50%",
-                                transform: "translateY(-50%)",
-                                cursor: "pointer",
-                                fontSize: "18px",
-                                userSelect: "none",
-                                color: "#666"
-                            }}
+                            className={styles.eyeIcon}
                             title="Show password"
                         >
                             {showPassword ? "🙈" : "👁️"} 
-                        </span>
+                        </button>
                     </div>
 
-                    {/* Address */}
-                    <div style={{ gridColumn: "span 2", marginTop: "15px", color: "#333", fontSize: "16px" }}>
-                        <strong>Address</strong>
-                    </div>
+                    {/* Address Section */}
+                    <div className={`${styles.sectionTitle} ${styles.fullWidth}`} style={{ marginTop: "15px" }}>Address</div>
                     
-                    <input name="street" placeholder="Street Address" onChange={handleAddressChange} required style={{ ...inputStyle, gridColumn: "span 2" }} />
-                    <input name="city" placeholder="City" onChange={handleAddressChange} required style={inputStyle} />
+                    <input name="street" placeholder="Street Address" onChange={handleAddressChange} required className={`${styles.inputField} ${styles.fullWidth}`} />
+                    <input name="city" placeholder="City" onChange={handleAddressChange} required className={styles.inputField} />
                     
-                    <select name="state" onChange={handleAddressChange} required style={inputStyle} defaultValue="Lagos">
+                    <select name="state" onChange={handleAddressChange} required className={styles.inputField} defaultValue="Lagos">
                         <option value="" disabled>Select State</option>
                         {NIGERIAN_STATES.map((state) => (
                             <option key={state} value={state}>
@@ -179,19 +170,20 @@ const Signup = () => {
                         ))}
                     </select>
                     
-                    <input name="country" placeholder="Country" onChange={handleAddressChange} required style={inputStyle} value="Nigeria" />
-                    <input name="zipCode" placeholder="Zip Code" onChange={handleAddressChange} required style={inputStyle} />
+                    <input name="country" placeholder="Country" onChange={handleAddressChange} required className={styles.inputField} value="Nigeria" />
+                    <input name="zipCode" placeholder="Zip Code" onChange={handleAddressChange} required className={styles.inputField} />
 
-                    {/* Submit */}
-                    <div style={{ gridColumn: "span 2", marginTop: "20px" }}>
-                        {status === "error" && <p style={{ color: "red", textAlign: "center" }}>{errorMessage}</p>}
-                        <button type="submit" className="login-btn" disabled={status === "loading"}>
+                    {/* Submit Button */}
+                    <div className={styles.fullWidth} style={{ marginTop: "10px" }}>
+                        {status === "error" && <p className={styles.errorMsg}>{errorMessage}</p>}
+                        <button type="submit" className={styles.submitBtn} disabled={status === "loading"}>
                             {status === "loading" ? "Creating Account..." : "Sign Up"}
                         </button>
                     </div>
 
-                    <div style={{ gridColumn: "span 2", textAlign: "center", marginTop: "10px" }}>
-                        <span onClick={() => navigate("/login")} style={{ color: "#007bff", cursor: "pointer" }}>
+                    {/* Footer Link */}
+                    <div className={`${styles.footerText} ${styles.fullWidth}`} style={{ textAlign: "center", marginTop: "10px" }}>
+                        <span onClick={() => navigate("/login")} className={styles.linkSpan}>
                             Already have an account? Login
                         </span>
                     </div>
@@ -199,17 +191,6 @@ const Signup = () => {
             </div>
         </div>
     );
-};
-
-const inputStyle = {
-    width: "100%",
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    fontSize: "14px",
-    boxSizing: "border-box",
-    backgroundColor: "white",
-    color: "#333"
 };
 
 export default Signup;

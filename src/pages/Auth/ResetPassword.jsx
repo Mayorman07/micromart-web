@@ -1,8 +1,10 @@
+// src/pages/Auth/ResetPassword.jsx
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import Snowfall from "./components/Snowfall"; 
-import "./VerifyEmail.css"; 
+import Snowfall from "../../components/Snowfall"; 
+// 1. Import the new CSS Module
+import styles from "./Auth.module.css"; 
 
 const ResetPassword = () => {
     const [searchParams] = useSearchParams();
@@ -14,6 +16,7 @@ const ResetPassword = () => {
     const [message, setMessage] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
+    // Regex Validations
     const validations = {
         hasLower: /[a-z]/.test(passwords.newPassword),
         hasUpper: /[A-Z]/.test(passwords.newPassword),
@@ -23,7 +26,6 @@ const ResetPassword = () => {
 
     const handleChange = (e) => {
         setPasswords({ ...passwords, [e.target.name]: e.target.value });
-        // Clear errors when user starts typing again
         if (status === "error") {
             setStatus("idle");
             setMessage("");
@@ -33,7 +35,7 @@ const ResetPassword = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // 👇 2. BLOCK SUBMISSION IF WEAK
+        // Block if requirements not met
         if (!validations.hasLower || !validations.hasUpper || !validations.hasSpecial || !validations.hasLength) {
             setMessage("Password does not meet complexity requirements.");
             setStatus("error");
@@ -60,53 +62,59 @@ const ResetPassword = () => {
         }
     };
 
+    // ✅ Success State
     if (status === "success") {
         return (
-            <div className="verify-container">
+            <div className={styles.authContainer}>
                 <Snowfall />
-                <div className="verify-card" style={{ zIndex: 1 }}>
-                    <div className="icon-circle" style={{ background: "rgba(40, 167, 69, 0.1)" }}>
+                <div className={styles.authCard}>
+                    <div className={styles.iconCircle} style={{ background: "rgba(40, 167, 69, 0.1)" }}>
                         <span style={{ fontSize: "30px" }}>✅</span>
                     </div>
-                    <h2 className="title">Password Reset!</h2>
-                    <p className="subtitle">You can now login with your new password.</p>
-                    <button className="login-btn" onClick={() => navigate("/login")}>Go to Login</button>
+                    <h2 className={styles.title}>Password Reset!</h2>
+                    <p className={styles.subtitle}>You can now login with your new password.</p>
+                    <button className={styles.submitBtn} onClick={() => navigate("/login")}>
+                        Go to Login
+                    </button>
                 </div>
             </div>
         );
     }
 
+    // 📝 Reset Form State
     return (
-        <div className="verify-container">
+        <div className={styles.authContainer}>
             <Snowfall />
-            <div className="verify-card" style={{ maxWidth: "500px", zIndex: 1, position: "relative" }}>
-                <h2 className="title">Reset your password</h2>
+            
+            <div className={styles.authCard} style={{ maxWidth: "500px" }}>
+                <h2 className={styles.title}>Reset your password</h2>
                 
-                <form onSubmit={handleSubmit} style={{ textAlign: "left", marginTop: "20px" }}>
+                <form onSubmit={handleSubmit} className={styles.formGroup} style={{ marginTop: "20px" }}>
                     
-                    {/* New Password */}
-                    <div style={{ marginBottom: "15px", position: "relative" }}>
-                        <label style={{ fontWeight: "600", fontSize: "14px", color: "#374151", marginBottom: "5px", display: "block" }}>
-                            New password
-                        </label>
+                    {/* New Password with Eye Icon */}
+                    <div className={styles.passwordWrapper}>
+                        <label style={labelStyle}>New password</label>
                         <input 
                             name="newPassword" 
                             type={showPassword ? "text" : "password"} 
                             placeholder="Enter new password"
                             onChange={handleChange}
                             required
-                            style={cleanInputStyle} 
+                            className={styles.inputField} 
+                            style={{ paddingRight: "40px" }}
                         />
-                         <span 
+                         <button 
+                            type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            style={eyeStyle}
+                            className={styles.eyeIcon}
+                            title="Show password"
                         >
                             {showPassword ? "🙈" : "👁️"}
-                        </span>
+                        </button>
                     </div>
 
-                    {/* 👇 3. DYNAMIC VALIDATION LIST */}
-                    <div style={{ fontSize: "12px", color: "#64748b", marginBottom: "15px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    {/* Dynamic Validation Checklist */}
+                    <div style={validationGridStyle}>
                         <ValidationItem isValid={validations.hasLower} text="One lowercase character" />
                         <ValidationItem isValid={validations.hasSpecial} text="One special character" />
                         <ValidationItem isValid={validations.hasUpper} text="One uppercase character" />
@@ -114,35 +122,29 @@ const ResetPassword = () => {
                     </div>
 
                     {/* Confirm Password */}
-                    <div style={{ marginBottom: "20px" }}>
-                        <label style={{ fontWeight: "600", fontSize: "14px", color: "#374151", marginBottom: "5px", display: "block" }}>
-                            Confirm new password
-                        </label>
+                    <div>
+                        <label style={labelStyle}>Confirm new password</label>
                         <input 
                             name="confirmPassword" 
                             type="password" 
                             placeholder="Confirm new password"
                             onChange={handleChange}
                             required
-                            style={cleanInputStyle}
+                            className={styles.inputField}
                         />
                     </div>
 
                     {status === "error" && (
-                        <p style={{ 
-                            color: "#dc2626", 
-                            fontSize: "14px", 
-                            textAlign: "center", 
-                            background: "#fef2f2", 
-                            padding: "10px", 
-                            borderRadius: "6px",
-                            border: "1px solid #fee2e2"
-                        }}>
+                        <p className={styles.errorMsg}>
                             ⚠️ {message}
                         </p>
                     )}
 
-                    <button type="submit" className="login-btn" style={{ backgroundColor: "#0072ff" }} disabled={status === "loading"}>
+                    <button 
+                        type="submit" 
+                        className={styles.submitBtn} 
+                        disabled={status === "loading"}
+                    >
                         {status === "loading" ? "Resetting..." : "Reset Password"}
                     </button>
                 </form>
@@ -151,7 +153,7 @@ const ResetPassword = () => {
     );
 };
 
-// 👇 4. HELPER COMPONENT FOR THE CHECKS
+// Helper Component for checklist
 const ValidationItem = ({ isValid, text }) => (
     <div style={{ 
         display: "flex", 
@@ -161,34 +163,29 @@ const ValidationItem = ({ isValid, text }) => (
         transition: "all 0.3s ease",
         fontWeight: isValid ? "600" : "normal"
     }}>
-        <span style={{ fontSize: "14px" }}>
-            {isValid ? "✓" : "•"}
-        </span>
+        <span style={{ fontSize: "14px" }}>{isValid ? "✓" : "•"}</span>
         {text}
     </div>
 );
 
-// Styles
-const cleanInputStyle = {
-    width: "100%", 
-    padding: "12px 15px", 
-    borderRadius: "8px", 
-    border: "1px solid #cbd5e1", 
-    backgroundColor: "#ffffff",   
-    color: "#1e293b",             
-    fontSize: "15px",
-    boxSizing: "border-box",
-    outline: "none",
-    transition: "border-color 0.2s"
+// Small inline styles for things specific to ONLY this component
+const labelStyle = { 
+    fontWeight: "600", 
+    fontSize: "14px", 
+    color: "#374151", 
+    marginBottom: "5px", 
+    display: "block",
+    textAlign: "left"
 };
 
-const eyeStyle = {
-    position: "absolute", 
-    right: "15px", 
-    top: "38px", 
-    cursor: "pointer", 
-    fontSize: "18px",
-    color: "#64748b"
+const validationGridStyle = { 
+    fontSize: "12px", 
+    color: "#64748b", 
+    marginBottom: "15px", 
+    display: "grid", 
+    gridTemplateColumns: "1fr 1fr", 
+    gap: "8px",
+    textAlign: "left"
 };
 
 export default ResetPassword;

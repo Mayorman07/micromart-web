@@ -1,8 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Snowfall from "./components/Snowfall"; // 👈 Import the effect (adjust path if needed)
-import "./VerifyEmail.css"; 
+import Snowfall from "../../components/Snowfall"; 
+// 1. Import the new CSS Module
+import styles from "./Auth.module.css"; 
 
 const Login = () => {
     const navigate = useNavigate();
@@ -51,25 +52,25 @@ const Login = () => {
     };
 
     return (
-        <div className="verify-container">
-            {/* ❄️ The Magic Effect */}
+        // Use styles.authContainer instead of "verify-container"
+        <div className={styles.authContainer}>
             <Snowfall />
 
-            <div className="verify-card" style={{ maxWidth: "400px", zIndex: 1, position: "relative" }}>
+            <div className={styles.authCard}>
                 
                 {/* 🔐 Header Icon */}
-                <div className="icon-circle" style={{ background: "rgba(255, 255, 255, 0.2)", backdropFilter: "blur(10px)" }}>
-                    <svg className="icon-svg" style={{ color: "#0072ff", width: "35px" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={styles.iconCircle}>
+                    <svg style={{ color: "#0072ff", width: "35px" }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                 </div>
 
-                <h2 className="title" style={{ marginTop: "10px" }}>Welcome Back</h2>
-                <p className="subtitle" style={{ marginBottom: "25px" }}>Enter your login details to access Micromart.</p>
+                <h2 className={styles.title}>Welcome Back</h2>
+                <p className={styles.subtitle}>Enter your login details to access Micromart.</p>
                 
-                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                <form onSubmit={handleSubmit} className={styles.formGroup}>
                     
-                    <div style={{ textAlign: "left" }}>
+                    <div>
                         <input 
                             type="email" 
                             name="email"
@@ -77,11 +78,11 @@ const Login = () => {
                             onChange={handleChange}
                             required 
                             placeholder="Email Address"
-                            style={glassInputStyle}
+                            className={styles.inputField} 
                         />
                     </div>
 
-                    <div style={{ textAlign: "left" }}>
+                    <div>
                         <input 
                             type="password" 
                             name="password"
@@ -89,30 +90,22 @@ const Login = () => {
                             onChange={handleChange}
                             required 
                             placeholder="Password"
-                            style={glassInputStyle}
+                            className={styles.inputField}
                         />
                     </div>
 
-                    {/* 👇 Forgot Password Link */}
-                    <div style={{ textAlign: "right", marginTop: "-5px" }}>
+                    {/* Forgot Password Link */}
+                    <div>
                         <span 
                             onClick={() => navigate("/forgot-password")}
-                            style={{ 
-                                color: "#0072ff", 
-                                fontSize: "14px", 
-                                cursor: "pointer", 
-                                fontWeight: "600",
-                                transition: "color 0.2s"
-                            }}
-                            onMouseOver={(e) => e.target.style.color = "#0056b3"}
-                            onMouseOut={(e) => e.target.style.color = "#0072ff"}
+                            className={styles.forgotLink}
                         >
                             Forgot Password?
                         </span>
                     </div>
 
                     {status === "error" && (
-                        <p style={{ color: "#dc2626", fontSize: "14px", fontWeight: "bold", background: "rgba(220, 38, 38, 0.1)", padding: "10px", borderRadius: "8px" }}>
+                        <p className={styles.errorMsg}>
                             ⚠️ {errorMessage}
                         </p>
                     )}
@@ -120,18 +113,17 @@ const Login = () => {
                     <button 
                         type="submit" 
                         disabled={status === "loading" || status === "success"}
-                        className="login-btn"
-                        style={{ marginTop: "5px" }}
+                        className={styles.submitBtn}
                     >
                         {status === "loading" ? "Authenticating..." : status === "success" ? "Success! 🔓" : "Sign In"}
                     </button>
                 </form>
 
-                <div style={{ marginTop: "25px", fontSize: "14px", color: "#64748b" }}>
+                <div className={styles.footerText}>
                     New to Micromart?{" "}
                     <span 
                         onClick={() => navigate("/signup")} 
-                        style={{ color: "#0072ff", cursor: "pointer", fontWeight: "bold", textDecoration: "underline", textUnderlineOffset: "4px" }}
+                        className={styles.linkSpan}
                     >
                         Create an account
                     </span>
@@ -139,21 +131,6 @@ const Login = () => {
             </div>
         </div>
     );
-};
-
-// 🎨 Styles
-const glassInputStyle = {
-    width: "100%",
-    padding: "14px 16px",
-    borderRadius: "12px",
-    border: "1px solid rgba(255, 255, 255, 0.3)",
-    background: "rgba(255, 255, 255, 0.6)",
-    fontSize: "16px",
-    outline: "none",
-    transition: "all 0.3s ease",
-    boxShadow: "inset 0 2px 4px rgba(0,0,0,0.02)",
-    color: "#1e293b",
-    boxSizing: "border-box"
 };
 
 export default Login;
