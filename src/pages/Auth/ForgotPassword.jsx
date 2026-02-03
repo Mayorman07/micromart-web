@@ -2,6 +2,8 @@
 import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom"; 
+// 👇 Import the premium components
+import LiquidBackgroundDeep from "../../components/LiquidBackgroundDeep";
 import Snowfall from "../../components/Snowfall"; 
 
 const ForgotPassword = () => {
@@ -15,6 +17,7 @@ const ForgotPassword = () => {
         setErrorMessage("");
 
         try {
+            // ✅ Your original endpoint is preserved here
             await axios.post("http://127.0.0.1:7082/users/password-reset/request", { email });
             setStatus("success");
         } catch (error) {
@@ -24,61 +27,82 @@ const ForgotPassword = () => {
         }
     };
 
-    // ✅ Success State
+    // ✨ The "Frosted Porcelain" Input Style
+    const proInput = "w-full px-4 py-3.5 rounded-xl bg-slate-50/50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all font-medium shadow-sm";
+
+    // ✅ Success State (Premium UI)
     if (status === "success") {
         return (
-            <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#00f2fe] to-[#4facfe] relative overflow-hidden font-sans">
+            <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden font-sans">
+                <LiquidBackgroundDeep />
                 <Snowfall />
-                <div className="relative z-10 w-full max-w-md bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/50 text-center mx-4">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                        <span className="text-3xl">📧</span>
+
+                <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-xl p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,180,216,0.5)] border border-white/60 text-center mx-4">
+                    <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-green-100">
+                        <span className="text-4xl">📧</span>
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Check your mail</h2>
-                    <p className="text-slate-500 mb-6">
+                    <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Check your mail</h2>
+                    <p className="text-slate-500 mb-6 font-medium">
                         We have sent a password reset link to <br/> 
-                        <span className="font-semibold text-slate-800">{email}</span>
+                        <span className="font-bold text-slate-800">{email}</span>
                     </p>
-                    <div className="bg-green-50 p-4 rounded-xl border border-green-100 mb-6 text-sm text-green-700">
+                    
+                    <div className="bg-green-50 p-4 rounded-xl border border-green-100 mb-8 text-sm text-green-700 font-medium">
                         Did not receive the email? Check your spam folder or try again.
                     </div>
-                    <div className="text-sm text-slate-500 mt-4">
-                        <Link to="/login" className="text-blue-600 font-bold hover:underline">Back to Login</Link>
-                    </div>
+
+                    <Link 
+                        to="/login" 
+                        className="w-full inline-block py-4 rounded-xl text-white font-bold text-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:to-blue-700 shadow-xl shadow-cyan-500/20 transition-all transform hover:-translate-y-0.5"
+                    >
+                        Back to Login
+                    </Link>
                 </div>
             </div>
         );
     }
 
-    // 📝 Request Form
+    // 📝 Request Form (Premium UI)
     return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#00f2fe] to-[#4facfe] relative overflow-hidden font-sans">
+        <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden font-sans">
+            
+            {/* Background Layers */}
+            <LiquidBackgroundDeep />
             <Snowfall />
-            <div className="relative z-10 w-full max-w-md bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/50 text-center mx-4">
+
+            {/* The Frosted Porcelain Card */}
+            <div className="relative z-10 w-full max-w-md p-10 mx-4 text-center 
+                bg-white/95 
+                backdrop-blur-xl 
+                rounded-3xl 
+                shadow-[0_20px_60px_-15px_rgba(0,180,216,0.5)] 
+                border border-white/60"
+            >
                 
-                <div className="w-16 h-16 bg-white/50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-cyan-50/80 flex items-center justify-center text-cyan-600 shadow-sm border border-cyan-100">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                     </svg>
                 </div>
 
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">Forgot Password?</h2>
-                <p className="text-slate-500 mb-8">No worries, we'll send you reset instructions.</p>
+                <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Forgot Password?</h2>
+                <p className="text-slate-500 mb-8 font-medium">No worries, we'll send you reset instructions.</p>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
-                    <div>
-                        <label className="block mb-1 text-slate-700 font-semibold text-sm">Email Address</label>
+                <form onSubmit={handleSubmit} className="text-left">
+                    <div className="mb-6">
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1 tracking-wider">Email Address</label>
                         <input 
                             type="email" 
                             placeholder="Enter your email" 
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required 
-                            className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/40 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-slate-700 placeholder-slate-400"
+                            className={proInput}
                         />
                     </div>
 
                     {status === "error" && (
-                        <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm font-medium text-center">
+                        <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium text-center">
                             ⚠️ {errorMessage}
                         </div>
                     )}
@@ -86,17 +110,20 @@ const ForgotPassword = () => {
                     <button 
                         type="submit" 
                         disabled={status === "loading"}
-                        className={`w-full py-3.5 rounded-xl text-white font-bold text-lg shadow-lg shadow-blue-500/30 transition-all duration-200 transform hover:-translate-y-0.5
-                            ${status === 'loading' ? 'bg-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'}
+                        className={`w-full py-4 rounded-xl font-bold text-white text-lg shadow-xl shadow-cyan-500/20 transition-all duration-200 transform hover:-translate-y-0.5
+                            ${status === 'loading' 
+                                ? 'bg-slate-300 cursor-not-allowed' 
+                                : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:to-blue-700'
+                            }
                         `}
                     >
                         {status === "loading" ? "Sending Link..." : "Reset Password"}
                     </button>
                 </form>
 
-                <div className="mt-8 text-sm text-slate-500">
-                    <Link to="/login" className="text-blue-600 font-bold hover:underline">
-                        ← Back to Login
+                <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+                    <Link to="/login" className="text-cyan-600 font-bold hover:text-cyan-800 transition-colors flex items-center justify-center gap-2">
+                        <span>←</span> Back to Login
                     </Link>
                 </div>
             </div>

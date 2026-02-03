@@ -1,24 +1,31 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-      "./index.html",
-      "./src/**/*.{js,ts,jsx,tsx}",
-    ],
-    theme: {
-      extend: {
-        // 1. Define the Keyframes here (moved from Snowfall.module.css)
-        keyframes: {
-          snowfall: {
-            '0%': { transform: 'translateY(-10vh) translateX(0px)', opacity: '0' },
-            '10%': { opacity: '1' },
-            '100%': { transform: 'translateY(110vh) translateX(50px)', opacity: '0.2' },
-          }
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      animation: {
+        snowfall: 'snowfall 10s linear infinite',
+        // New Liquid Animations
+        blob: "blob 7s infinite",
+      },
+      keyframes: {
+        snowfall: {
+          '0%': { transform: 'translateY(-10vh) translateX(0px)', opacity: '0' },
+          '10%': { opacity: '1' },
+          '100%': { transform: 'translateY(110vh) translateX(50px)', opacity: '0.2' },
         },
-        // 2. Register the animation name so Tailwind recognizes 'animate-snowfall'
-        animation: {
-          snowfall: 'snowfall 10s linear infinite',
-        }
+        // The "Liquid" Movement
+        blob: {
+          "0%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+          "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+          "100%": { transform: "translate(0px, 0px) scale(1)" },
+        },
       },
     },
-    plugins: [],
-  }
+  },
+  plugins: [],
+}

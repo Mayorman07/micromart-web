@@ -2,7 +2,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import LiquidBackgroundDeep from "../../components/LiquidBackgroundDeep";
+import LiquidBackgroundVibrant from "../../components/LiquidBackgroundDark";
 import Snowfall from "../../components/Snowfall";
 
 const Login = () => {
@@ -47,75 +47,76 @@ const Login = () => {
         }
     };
 
-    const proInput = "w-full px-4 py-3.5 rounded-xl bg-slate-50/50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all font-medium shadow-sm";
+    // 💎 Premium Crystal Input Style
+    // Less white, more transparency, cleaner borders
+    const crystalInput = "w-full px-5 py-4 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/70 focus:outline-none focus:bg-white/30 focus:border-white/60 focus:ring-2 focus:ring-white/20 transition-all backdrop-blur-sm";
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden font-sans">
             
-            <LiquidBackgroundDeep />
+            {/* LAYER 1: The Vibrant Liquid Background */}
+            <LiquidBackgroundVibrant />
+
+            {/* LAYER 2: The Snowfall (Classic) */}
             <Snowfall />
 
-            {/* ✨ THE FROSTED PORCELAIN CARD 
-               - bg-white/95: Just transparent enough to feel like glass, opaque enough to stay white.
-               - backdrop-blur-2xl: Blurs the background so you get a soft blue glow, not a dark muddy one.
-            */}
-          <div className="relative z-10 w-full max-w-md p-10 mx-4 text-center 
-                bg-white/95
-                backdrop-blur-xl
+            {/* LAYER 3: The Premium Crystal Card */}
+            {/* Note: changed bg-white/30 to bg-white/10 for a clearer, richer look */}
+            <div className="relative z-10 w-full max-w-md p-10 mx-4 text-center 
+                bg-white/10 
+                backdrop-blur-xl 
                 rounded-3xl 
-                shadow-[0_20px_60px_-15px_rgba(0,180,216,0.5)]
-                border border-white/60"
+                border border-white/40 
+                shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
             >
                 {/* Header Icon */}
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-cyan-50/80 flex items-center justify-center text-cyan-600 shadow-sm border border-cyan-100">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-md border border-white/30 shadow-inner">
+                    <svg className="w-8 h-8 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                 </div>
 
-                <h2 className="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">
+                <h2 className="text-3xl font-bold text-white mb-2 drop-shadow-md">
                     Welcome Back
                 </h2>
-                <p className="text-slate-500 mb-8 font-medium">Please enter your details to sign in.</p>
+                <p className="text-blue-50 mb-8 font-medium drop-shadow-sm">Access your MicroMart dashboard.</p>
                 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5 text-left">
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1 tracking-wider">Email Address</label>
                         <input 
                             type="email" 
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
                             required 
-                            placeholder="name@company.com"
-                            className={proInput}
+                            placeholder="Email Address"
+                            className={crystalInput}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1 tracking-wider">Password</label>
                         <input 
                             type="password" 
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
                             required 
-                            placeholder="••••••••"
-                            className={proInput}
+                            placeholder="Password"
+                            className={crystalInput}
                         />
                     </div>
 
-                    <div className="flex items-center justify-end">
+                    <div className="text-right">
                         <span 
                             onClick={() => navigate("/forgot-password")}
-                            className="text-sm text-cyan-600 hover:text-cyan-800 cursor-pointer font-bold transition-colors"
+                            className="text-sm text-white hover:text-blue-100 cursor-pointer transition-colors font-semibold tracking-wide drop-shadow-sm"
                         >
                             Forgot Password?
                         </span>
                     </div>
 
                     {status === "error" && (
-                        <div className="p-3 rounded-lg bg-red-50/80 border border-red-100 text-red-600 text-sm font-medium text-center">
+                        <div className="p-3 rounded-xl bg-red-500/30 border border-red-200/50 text-white text-sm font-medium text-center backdrop-blur-md">
                             ⚠️ {errorMessage}
                         </div>
                     )}
@@ -123,24 +124,24 @@ const Login = () => {
                     <button 
                         type="submit" 
                         disabled={status === "loading" || status === "success"}
-                        className={`w-full py-4 rounded-xl font-bold text-white text-lg shadow-xl shadow-cyan-500/20 transition-all duration-200 transform hover:-translate-y-0.5
+                        className={`w-full py-4 rounded-xl font-bold text-lg text-blue-600 shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-white/20
                             ${status === 'loading' 
-                                ? 'bg-slate-300 cursor-not-allowed' 
-                                : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:to-blue-700'
+                                ? 'bg-white/50 cursor-not-allowed text-white' 
+                                : 'bg-white hover:bg-blue-50'
                             }
                         `}
                     >
-                        {status === "loading" ? "Signing In..." : "Sign In"}
+                        {status === "loading" ? "Authenticating..." : "Sign In"}
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-slate-200/60 text-sm text-slate-500 font-medium">
-                    Don't have an account?{" "}
+                <div className="mt-8 text-sm text-white/80 font-medium">
+                    New to Micromart?{" "}
                     <span 
                         onClick={() => navigate("/signup")} 
-                        className="text-cyan-600 font-bold cursor-pointer hover:underline"
+                        className="text-white font-bold cursor-pointer hover:underline underline-offset-4 decoration-2"
                     >
-                        Sign up
+                        Create an account
                     </span>
                 </div>
             </div>
@@ -148,4 +149,4 @@ const Login = () => {
     );
 };
 
-export default Login;
+export default AdminLogin;
