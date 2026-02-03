@@ -1,5 +1,5 @@
+// src/components/Snowfall.jsx
 import { useMemo } from "react";
-import styles from "./Snowfall.module.css"; 
 
 const Snowfall = () => {
     const snowflakes = useMemo(() => {
@@ -14,20 +14,21 @@ const Snowfall = () => {
     }, []);
 
     return (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }}>
+        <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
             {snowflakes.map((flake) => (
                 <div 
                     key={flake.id}
-                    // 👇 Use the module class here
-                    className={styles.snowflake}
+                    // 1. ADD 'animate-snowfall' here. This forces Tailwind to generate the keyframes!
+                    className="absolute top-[-20px] bg-white rounded-full shadow-[0_0_5px_rgba(255,255,255,0.8)] animate-snowfall"
                     style={{
                         left: `${flake.left}vw`,
                         width: `${flake.size}px`,
                         height: `${flake.size}px`,
-                        // 👇 Matches the keyframe name in Snowfall.module.css
-                        animation: `${styles.snowfall} ${flake.duration}s linear infinite`, 
+                        opacity: flake.opacity,
+                        // 2. Override specific animation properties for randomness
+                        // (We don't set the full 'animation' string anymore, just the parts that change)
+                        animationDuration: `${flake.duration}s`,
                         animationDelay: `-${flake.delay}s`,
-                        opacity: flake.opacity
                     }}
                 />
             ))}
