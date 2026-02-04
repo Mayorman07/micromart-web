@@ -106,17 +106,17 @@ const Dashboard = () => {
                     {/* 3. Dynamic Module Status Card */}
                     <BentoItem className="!bg-slate-900 !border-slate-800 text-white justify-between">
                         <div className="flex justify-between items-start">
-                            <h3 className="text-lg font-bold">Active Module</h3>
+                            <h3 className="text-lg font-bold">Quicksilver</h3>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-cyan-400 animate-spin-slow">
                                 <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25ZM12.75 6a.75.75 0 0 0-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 0 0 0-1.5h-3.75V6Z" clipRule="evenodd" />
                             </svg>
                         </div>
                         <div>
                             <h2 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">
-                                Dynamic Snowfall
+                            Snowfall on Liquid Glass
                             </h2>
                             <p className="text-slate-400 text-sm font-medium mt-2">
-                                v1.2 • Running normally
+                                v1.2 • Running optimally
                             </p>
                         </div>
                     </BentoItem>
@@ -144,7 +144,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="mt-12 text-center text-sm text-slate-500 font-medium">
-                    © 2026 MicroMart Inc. Built with Spring Boot & Tailwind CSS.
+                    © 2026 MicroMart Inc. Built with Violet.
                 </div>
             </div>
         </div>

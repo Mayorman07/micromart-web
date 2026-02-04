@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Pages
 import VerifyEmail from "./pages/Auth/VerifyEmail";
 import Login from "./pages/Auth/Login";
 import AdminLogin from "./pages/Auth/AdminLogin";
@@ -8,7 +7,6 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Signup from "./pages/Auth/Signup";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
-// Import the new Coming Soon page
 import ComingSoon from "./pages/General/ComingSoon"; 
 
 function App() {
