@@ -79,7 +79,7 @@ const Dashboard = () => {
                                 MicroMart <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-white">v2.0</span>
                             </h1>
                             <p className="text-lg text-blue-50 font-medium max-w-xl leading-relaxed drop-shadow-sm">
-                                We're currently refactoring our Spring Boot core to deliver 10x faster transaction processing.
+                                We're currently refactoring our core infrastructure to deliver 10x better experience.
                             </p>
                         </div>
                         
