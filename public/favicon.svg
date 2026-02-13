@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="micromart-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <circle cx="256" cy="256" r="256" fill="url(#micromart-grad)" />
+  
+  <text x="50%" y="50%" 
+        dominant-baseline="central" 
+        text-anchor="middle" 
+        fill="white" 
+        font-family="Verdana, sans-serif" 
+        font-weight="bold" 
+        font-size="340">
+    M
+  </text>
+</svg>
