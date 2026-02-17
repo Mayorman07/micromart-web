@@ -16,28 +16,22 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddProduct from "./pages/admin/AddProduct";     
 import UserDossier from "./pages/admin/UserDossier"; 
 import OperativesList from "./pages/admin/OperativesList";
-import InventoryRegistry from "./pages/admin/InventoryRegistry";
+import InventoryRegistry from "./pages/admin/InventoryRegistry"; // ⬅️ Kept this
+import InventoryDashboard from "./pages/admin/InventoryDashboard"; // ⬅️ Added this
 import ProfileSettings from "./pages/admin/ProfileSettings";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ==============================
-            🌍 PUBLIC WORLD
-           ============================== */}
+        {/* ... PUBLIC WORLD ROUTES REMAIN UNCHANGED ... */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        
         <Route path="/dashboard" element={<UserDashboard />} />
-        <Route 
-            path="/newsletter" 
-            element={<ComingSoon title="Newsletter" message="Construction in progress." />} 
-        />
 
         {/* ==============================
             🔐 ADMIN WORLD
@@ -50,10 +44,11 @@ function App() {
             <Route path="products" element={<AddProduct />} />
             <Route path="view/:email" element={<UserDossier />} />
             <Route path="settings" element={<ProfileSettings />} />
-            
-            {/* ✅ SWAPPED placeholder for the real List component */}
             <Route path="operatives" element={<OperativesList />} />
-            <Route path="inventory" element={<InventoryRegistry />} />
+            
+            {/* ✅ Both components are now active on different paths */}
+            <Route path="inventory" element={<InventoryDashboard />} />
+            <Route path="registry" element={<InventoryRegistry />} /> 
         </Route>
       </Routes>
     </BrowserRouter>
