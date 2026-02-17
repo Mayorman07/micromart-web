@@ -40,7 +40,7 @@ const AdminLogin = () => {
             setStatus("success");
             
             // 👇 Redirect to dashboard (or admin dashboard if you have one)
-            setTimeout(() => navigate("/dashboard"), 1000);
+            setTimeout(() => navigate("/admin/dashboard"), 1000);
 
         } catch (error) {
             console.error("Login Failed", error);
