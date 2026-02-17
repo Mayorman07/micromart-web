@@ -18,13 +18,12 @@ const AdminLayout = () => {
       }
 
       try {
-        // Fetch specifically for your admin email
+        // 🎯 Your specific admin identity
         const adminEmail = "mayowa.hyde@gmail.com"; 
         const response = await axios.get(`http://127.0.0.1:7082/users/users/view/${adminEmail}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        // Ensure we actually got data back
         if (response.data && response.data.firstName) {
             setAdminProfile(response.data);
         }
@@ -45,10 +44,11 @@ const AdminLayout = () => {
     navigate("/admin/login");
   };
 
+  // 🛠️ UPDATED MENU ITEMS
   const menuItems = [
     { name: "Mission Control", path: "/admin/dashboard", icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" },
-    { name: "Inventory", path: "/admin/products", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
-    { name: "Operatives", path: "/admin/users", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
+    { name: "Inventory", path: "/admin/inventory", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" }, // 🎯 Points to InventoryRegistry
+    { name: "Operatives", path: "/admin/operatives", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" }, // 🎯 Points to OperativesList
   ];
 
   return (
@@ -58,7 +58,7 @@ const AdminLayout = () => {
       <aside className="w-72 fixed h-full z-20 bg-[#0f1422] border-r border-white/5 shadow-2xl flex flex-col">
         <div className="p-8 flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-cyan-500/20">M</div>
-          <span className="text-xl font-bold text-white tracking-wider font-display">MicroMart</span>
+          <span className="text-xl font-bold text-white tracking-wider font-display uppercase">MicroMart</span>
         </div>
 
         <nav className="px-4 space-y-2 flex-1 mt-4">
@@ -77,7 +77,7 @@ const AdminLayout = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                 </svg>
-                <span className="font-medium text-sm">{item.name}</span>
+                <span className="font-bold text-xs uppercase tracking-tight">{item.name}</span>
               </button>
             );
           })}
@@ -88,10 +88,7 @@ const AdminLayout = () => {
           <div className="flex flex-col gap-4">
             <div 
               className="flex items-center gap-3 group cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-all" 
-              onClick={() => {
-                  // Navigate specifically to the settings or your own dossier
-                  navigate(`/admin/settings`);
-              }}
+              onClick={() => navigate(`/admin/view/mayowa.hyde@gmail.com`)}
             >
               <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-white font-black overflow-hidden shadow-inner">
                  {adminProfile?.firstName ? (
@@ -102,7 +99,6 @@ const AdminLayout = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-white truncate">
-                  {/* DEFENSIVE: Use fallbacks for names */}
                   {adminProfile?.firstName ? `${adminProfile.firstName} ${adminProfile.lastName}` : (isProfileLoading ? "Syncing..." : "Authorized Admin")}
                 </p>
                 <p className="text-[9px] text-cyan-500 font-mono uppercase tracking-widest">Level 5 Access</p>

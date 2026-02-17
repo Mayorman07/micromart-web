@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddProduct from "./pages/admin/AddProduct";     
 import UserDossier from "./pages/admin/UserDossier"; 
 import OperativesList from "./pages/admin/OperativesList";
+import InventoryRegistry from "./pages/admin/InventoryRegistry";
 import ProfileSettings from "./pages/admin/ProfileSettings";
 
 function App() {
@@ -51,7 +52,8 @@ function App() {
             <Route path="settings" element={<ProfileSettings />} />
             
             {/* ✅ SWAPPED placeholder for the real List component */}
-            <Route path="users" element={<OperativesList />} />
+            <Route path="operatives" element={<OperativesList />} />
+            <Route path="inventory" element={<InventoryRegistry />} />
         </Route>
       </Routes>
     </BrowserRouter>
