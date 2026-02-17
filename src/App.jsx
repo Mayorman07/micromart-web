@@ -15,7 +15,8 @@ import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard"; 
 import AddProduct from "./pages/admin/AddProduct";     
 import UserDossier from "./pages/admin/UserDossier"; 
-import OperativesList from "./pages/admin/OperativesList"; // ✅ New Import
+import OperativesList from "./pages/admin/OperativesList";
+import ProfileSettings from "./pages/admin/ProfileSettings";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="products" element={<AddProduct />} />
             <Route path="view/:email" element={<UserDossier />} />
+            <Route path="settings" element={<ProfileSettings />} />
             
             {/* ✅ SWAPPED placeholder for the real List component */}
             <Route path="users" element={<OperativesList />} />
