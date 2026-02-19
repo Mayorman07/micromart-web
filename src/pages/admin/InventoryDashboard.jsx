@@ -1,12 +1,21 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+/**
+ * InventoryDashboard Component
+ * Provides a high-level overview of system assets with real-time search functionality.
+ */
 const InventoryDashboard = () => {
+    // --- State Management ---
     const [inventory, setInventory] = useState([]);
-    const [filteredInventory, setFilteredInventory] = useState([]); // 🔍 Filtered list
-    const [searchTerm, setSearchTerm] = useState(""); // 🔍 Search input state
+    const [filteredInventory, setFilteredInventory] = useState([]); 
+    const [searchTerm, setSearchTerm] = useState(""); 
     const [loading, setLoading] = useState(true);
 
+    /**
+     * Fetches all inventory items from the service registry.
+     * Standardizes the backend data structure into a consistent UI View Model.
+     */
     const fetchInventory = async () => {
         setLoading(true);
         try {
@@ -17,6 +26,7 @@ const InventoryDashboard = () => {
 
             const items = response.data.content || [];
 
+            // Internal Mapping: Standardizing API response to UI model
             const standardizedItems = items.map((item, index) => ({
                 id: index, 
                 name: item.name,
@@ -29,15 +39,18 @@ const InventoryDashboard = () => {
             }));
 
             setInventory(standardizedItems);
-            setFilteredInventory(standardizedItems); // 🎯 Initially show everything
+            setFilteredInventory(standardizedItems); 
         } catch (err) {
-            console.error("Mission Control Error:", err);
+            console.error("Registry Sync Error: Unable to retrieve inventory data", err);
         } finally {
             setLoading(false);
         }
     };
 
-    // 🎯 Live Filtering Logic
+    /**
+     * Effect Hook: Handles client-side filtering logic.
+     * Monitors changes in searchTerm and inventory state to update the view.
+     */
     useEffect(() => {
         const results = inventory.filter(item =>
             item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,13 +59,14 @@ const InventoryDashboard = () => {
         setFilteredInventory(results);
     }, [searchTerm, inventory]);
 
+    // Initial data synchronization on component mount
     useEffect(() => {
         fetchInventory();
     }, []);
 
     return (
         <div className="p-6 space-y-6 animate-in fade-in duration-700">
-            {/* 📊 HEADER & SEARCH */}
+            {/* Control Header: Asset Summary and Search */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="flex gap-6 w-full max-w-2xl">
                     <div className="bg-[#161b2c] p-6 rounded-[2rem] border border-white/5 shadow-2xl flex-1">
@@ -61,7 +75,7 @@ const InventoryDashboard = () => {
                     </div>
                 </div>
 
-                {/* 🔍 SEARCH BAR UI */}
+                {/* Search Interface */}
                 <div className="relative w-full md:w-96 group">
                     <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                         <svg className="w-4 h-4 text-slate-500 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +92,7 @@ const InventoryDashboard = () => {
                 </div>
             </div>
 
-            {/* 🛡️ INVENTORY TABLE */}
+            {/* Inventory Data Table */}
             <div className="bg-[#161b2c] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -128,6 +142,7 @@ const InventoryDashboard = () => {
                                                 <span className={`text-[10px] font-black px-3 py-1 rounded-lg uppercase w-fit ${item.stockQuantity > 10 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/10' : 'bg-red-500/10 text-red-500 border border-red-500/10'}`}>
                                                     {item.stockQuantity} UNITS
                                                 </span>
+                                                {/* Visual Stock Representation */}
                                                 <div className="w-24 bg-slate-800 h-1 rounded-full overflow-hidden">
                                                     <div 
                                                         className={`h-full transition-all duration-1000 ${item.stockQuantity > 10 ? 'bg-emerald-500' : 'bg-red-500'}`}
