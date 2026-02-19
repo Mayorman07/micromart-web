@@ -1,184 +1,169 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 /**
- * UserList Component
- * Displays a paginated list of registered users with search capabilities.
- * Integrates with Spring Data Pageable structure from the backend.
+ * UserDetails Component
+ * Provides a granular view of a user's profile, roles, and system authorities.
  */
-const UserList = () => {
+const UserDetails = () => {
+    const { email } = useParams();
     const navigate = useNavigate();
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
     
-    const [pagination, setPagination] = useState({
-        currentPage: 0,
-        totalPages: 0,
-        totalElements: 0,
-        pageSize: 15
-    });
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchUserData();
+    }, [email]);
 
     /**
-     * Fetches user data from the backend.
-     * Maps the 'content' array and pagination metadata from the Spring Page object.
+     * Retrieves user profile data using the email parameter.
+     * Expects a valid JWT in localStorage for Authorization.
      */
-    const fetchUsers = useCallback(async (page = 0, query = "") => {
+    const fetchUserData = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`http://127.0.0.1:7082/users/users/all`, {
-                params: {
-                    page: page,
-                    size: pagination.pageSize,
-                    keyword: query
-                },
-                headers: { 
+            const token = localStorage.getItem("token"); 
+
+            // Targets Spring Boot @GetMapping(path ="/view/{email}")
+            const response = await axios.get(`http://127.0.0.1:7082/users/users/view/${email}`, {
+                headers: {
                     Authorization: `Bearer ${token}` 
                 }
             });
-
-            const { content, totalPages, totalElements, number } = response.data;
-            
-            setUsers(content || []);
-            setPagination(prev => ({
-                ...prev,
-                currentPage: number,
-                totalPages: totalPages,
-                totalElements: totalElements
-            }));
-        } catch (error) {
-            console.error("Fetch Error: Failed to retrieve user list", error);
-            // Auth check: Redirect to login if session is expired
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                navigate("/login");
+            setUser(response.data);
+            setError(null);
+        } catch (err) {
+            console.error("Profile Fetch Failed:", err);
+            if (err.response?.status === 403) {
+                setError("ACCESS_DENIED: Insufficient administrative privileges.");
+            } else {
+                setError("USER_NOT_FOUND: The requested profile does not exist.");
             }
         } finally {
             setLoading(false);
         }
-    }, [pagination.pageSize, navigate]);
+    };
 
-    // Debounced search to limit API requests while typing
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            fetchUsers(0, searchTerm);
-        }, 500);
+    /**
+     * Updates the user role to MANAGER.
+     * Hits Spring Boot @PutMapping("/{userId}/roles/manager")
+     */
+    const promoteToManager = async () => {
+        setIsUpdating(true);
+        try {
+            const token = localStorage.getItem("token");
+            await axios.put(`http://127.0.0.1:7082/users/users/${email}/roles/manager`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert("User successfully promoted to Manager.");
+            fetchUserData(); // Refresh local state
+        } catch (error) {
+            console.error("Promotion Error:", error);
+            alert("Promotion failed. Verify administrative permissions.");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, fetchUsers]);
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+            <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+            <p className="text-slate-500 font-mono text-[10px] tracking-[0.3em] uppercase">Loading Profile...</p>
+        </div>
+    );
+
+    if (error) return (
+        <div className="p-10 bg-red-900/10 border border-red-500/20 rounded-[2rem] text-center">
+            <h2 className="text-red-500 font-black text-xl mb-2">SERVICE ERROR</h2>
+            <p className="text-red-400/70 font-mono text-xs mb-6">{error}</p>
+            <button 
+                onClick={() => navigate("/admin/dashboard")}
+                className="px-6 py-2 bg-red-500 text-white text-xs font-bold rounded-xl hover:bg-red-400 transition-all"
+            >
+                Return to Dashboard
+            </button>
+        </div>
+    );
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8 pb-20">
-            {/* Header and Search */}
-            <div className="flex justify-between items-end px-4">
-                <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase">User Management</h1>
-                    <p className="text-slate-500 text-sm mt-1">Manage user accounts and access permissions.</p>
+        <div className="animate-in fade-in duration-500 space-y-8 pb-20">
+            
+            {/* Breadcrumb Navigation */}
+            <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                <div className="flex items-center gap-4 text-slate-500 text-sm">
+                    <button onClick={() => navigate("/admin/dashboard")} className="hover:text-white transition-colors font-medium text-[11px] uppercase tracking-wider">Dashboard</button>
+                    <span className="opacity-30">/</span>
+                    <span className="text-cyan-400 font-bold tracking-widest text-xs uppercase">User Profile</span>
                 </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 
-                <div className="relative w-80">
-                    <input 
-                        type="text"
-                        placeholder="Search by name or email..."
-                        className="w-full bg-[#161b2c] border border-white/10 rounded-2xl py-3.5 px-5 text-sm text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-600 shadow-xl"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                    <div className="absolute right-4 top-4 text-slate-600">
-                        {loading ? (
-                            <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-                        ) : (
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        )}
+                {/* Profile Identity Sidebar */}
+                <div className="md:col-span-4 space-y-6">
+                    <div className="bg-[#161b2c] border border-white/5 rounded-[3rem] p-10 text-center relative overflow-hidden shadow-2xl">
+                        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-cyan-500/10 to-transparent"></div>
+                        
+                        <div className="relative z-10">
+                            <div className="w-32 h-32 bg-slate-900 rounded-full mx-auto mb-6 border-4 border-[#161b2c] shadow-xl flex items-center justify-center text-4xl font-black text-white">
+                                {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                            </div>
+                            
+                            <h2 className="text-3xl font-black text-white tracking-tight">
+                                {user.firstName} {user.lastName}
+                            </h2>
+                            <p className="text-cyan-500 font-mono text-[10px] mt-2 tracking-widest uppercase opacity-70">UID: {user.userId?.substring(0,8)}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* User Data Table */}
-            <div className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-white/5 border-b border-white/5">
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">User</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Last Login</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {users.length > 0 ? (
-                                users.map((user) => (
-                                    <tr key={user.userId} className="group hover:bg-white/[0.02] transition-colors">
-                                        <td className="p-6">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-black font-bold text-xs">
-                                                    {user.firstName[0]}{user.lastName[0]}
-                                                </div>
-                                                <span className="text-white font-bold">{user.firstName} {user.lastName}</span>
-                                            </div>
-                                        </td>
-                                        <td className="p-6 text-slate-400 text-sm font-medium">{user.email}</td>
-                                        <td className="p-6 text-center">
-                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                                                user.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
-                                            }`}>
-                                                {user.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-6 text-slate-500 text-xs font-mono text-center">
-                                            {user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleDateString() : 'N/A'}
-                                        </td>
-                                        <td className="p-6 text-right">
-                                            <button 
-                                                onClick={() => navigate(`/admin/view/${user.email}`)}
-                                                className="text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all"
-                                            >
-                                                View Details
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="5" className="p-20 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
-                                        {loading ? "Loading user records..." : "No users found."}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Pagination Controls */}
-            <div className="flex justify-between items-center px-6">
-                <p className="text-slate-500 text-xs font-medium">
-                    Showing <span className="text-white">{users.length}</span> of {pagination.totalElements} users
-                </p>
-                <div className="flex gap-2">
-                    <button 
-                        disabled={pagination.currentPage === 0}
-                        onClick={() => fetchUsers(pagination.currentPage - 1, searchTerm)}
-                        className="p-3 rounded-xl bg-[#161b2c] border border-white/5 text-white disabled:opacity-20 hover:bg-white/5 transition-all"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
-                    </button>
-                    <button 
-                        disabled={pagination.currentPage + 1 >= pagination.totalPages}
-                        onClick={() => fetchUsers(pagination.currentPage + 1, searchTerm)}
-                        className="p-3 rounded-xl bg-[#161b2c] border border-white/5 text-white disabled:opacity-20 hover:bg-white/5 transition-all"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-                    </button>
+                {/* Access Control & Permissions */}
+                <div className="md:col-span-8 space-y-8">
+                    <div className="bg-slate-900/50 border border-white/5 rounded-[3rem] p-10 shadow-xl">
+                        <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-10">Access Control Matrix</h3>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                            {/* Roles Section */}
+                            <div>
+                                <h4 className="text-white text-sm font-bold mb-6">Security Roles</h4>
+                                <div className="flex flex-wrap gap-2 mb-8">
+                                    {user.roles?.map(role => (
+                                        <span key={role} className="px-4 py-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl text-[9px] font-black uppercase tracking-wider">
+                                            {role}
+                                        </span>
+                                    ))}
+                                </div>
+                                <button 
+                                    onClick={promoteToManager}
+                                    disabled={isUpdating}
+                                    className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-[10px] font-black rounded-2xl transition-all shadow-lg hover:shadow-cyan-500/20 disabled:opacity-50 uppercase tracking-widest"
+                                >
+                                    {isUpdating ? "Processing..." : "Promote to Manager"}
+                                </button>
+                            </div>
+                            
+                            {/* Authorities Section */}
+                            <div>
+                                <h4 className="text-white text-sm font-bold mb-6">Permissions</h4>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {user.authorities?.map(auth => (
+                                        <div key={auth} className="flex items-center gap-3 p-4 bg-white/[0.02] rounded-2xl border border-white/5 group hover:border-cyan-500/40 transition-all">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.6)]"></div>
+                                            <span className="text-slate-400 text-[11px] font-mono">{auth}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-export default UserList;
+export default UserDetails;
