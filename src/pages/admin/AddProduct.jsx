@@ -2,6 +2,10 @@ import { useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx"; 
 
+/**
+ * Static Category Mapping
+ * Used to synchronize UI display names with backend database identifiers.
+ */
 const categoryMap = [
     { id: 3, name: "RC Hobbies" },
     { id: 3, name: "Drones" },
@@ -16,22 +20,33 @@ const AddProduct = () => {
     const [showSummary, setShowSummary] = useState(false);
     const [importSummary, setImportSummary] = useState({ success: 0, failures: [] });
 
-    // Initial state set to the first category in your map
+    // Initial state matching the default category selection
     const [formData, setFormData] = useState({
-        name: "", price: "", stockQuantity: "", categoryId: 3, 
-        categoryName: "RC Hobbies", description: "", imageUrl: "", skuCode: ""
+        name: "", 
+        price: "", 
+        stockQuantity: "", 
+        categoryId: 3, 
+        categoryName: "RC Hobbies", 
+        description: "", 
+        imageUrl: "", 
+        skuCode: ""
     });
 
-    // 📥 DOWNLOAD TEMPLATE
+    /**
+     * Generates and downloads an Excel template for bulk product uploads.
+     */
     const downloadTemplate = () => {
         const headers = [["name", "price", "stockQuantity", "categoryId", "categoryName", "description", "imageUrl", "skuCode"]];
         const ws = XLSX.utils.aoa_to_sheet(headers);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Template");
-        XLSX.writeFile(wb, "Micromart_Template.xlsx");
+        XLSX.writeFile(wb, "Product_Import_Template.xlsx");
     };
 
-    // 🚀 BULK UPLOAD WITH AUTH
+    /**
+     * Handles bulk import via Excel file.
+     * Parses data, cleans keys, and performs sequential API POST requests.
+     */
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -50,23 +65,27 @@ const AddProduct = () => {
 
             for (let i = 0; i < data.length; i++) {
                 const row = data[i];
-                const clean = Object.keys(row).reduce((acc, key) => {
+                // Normalize keys to lowercase for consistent processing
+                const normalizedRow = Object.keys(row).reduce((acc, key) => {
                     acc[key.toLowerCase()] = row[key];
                     return acc;
                 }, {});
 
                 try {
                     await axios.post("http://127.0.0.1:7082/products/products/create", {
-                        ...clean,
-                        price: parseFloat(clean.price) || 0,
-                        stockQuantity: parseInt(clean.stockquantity || clean.stockQuantity) || 0,
-                        categoryId: parseInt(clean.categoryid) || 3 
+                        ...normalizedRow,
+                        price: parseFloat(normalizedRow.price) || 0,
+                        stockQuantity: parseInt(normalizedRow.stockquantity || normalizedRow.stockQuantity) || 0,
+                        categoryId: parseInt(normalizedRow.categoryid) || 3 
                     }, {
-                        headers: { Authorization: `Bearer ${token}` } // 🔐 Authorization Header
+                        headers: { Authorization: `Bearer ${token}` }
                     });
                     successCount++;
                 } catch (err) {
-                    failureLog.push({ sku: clean.skucode || "Unknown", reason: err.response?.data?.message || "Sync Error" });
+                    failureLog.push({ 
+                        sku: normalizedRow.skucode || "Unknown Identifier", 
+                        reason: err.response?.data?.message || "Internal Service Error" 
+                    });
                 }
                 setProgress(prev => ({ ...prev, current: i + 1 }));
             }
@@ -77,7 +96,9 @@ const AddProduct = () => {
         reader.readAsBinaryString(file);
     };
 
-    // 📝 MANUAL SUBMIT WITH LINKED CATEGORY FIX
+    /**
+     * Submits a single product entry manually.
+     */
     const handleManualSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -87,28 +108,32 @@ const AddProduct = () => {
             ...formData,
             price: parseFloat(formData.price) || 0,
             stockQuantity: parseInt(formData.stockQuantity) || 0,
-            categoryId: parseInt(formData.categoryId) // 🎯 Ensure numeric ID from Map
+            categoryId: parseInt(formData.categoryId)
         };
 
         try {
             await axios.post("http://127.0.0.1:7082/products/products/create", payload, {
                 headers: { 
-                    Authorization: `Bearer ${token}`, // 🚀 Postman Token
+                    Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json" 
                 }
             });
-            alert("✅ Product Created Successfully!");
+            alert("Product created successfully.");
             setFormData({ name: "", price: "", stockQuantity: "", categoryId: 3, categoryName: "RC Hobbies", description: "", imageUrl: "", skuCode: "" });
         } catch (err) {
-            console.error("Backend Crash Details:", err.response?.data);
-            alert(`❌ Error ${err.response?.status}: ${err.response?.data?.message || "Internal Server Error"}`);
-        } finally { setLoading(false); }
+            console.error("Submission Error:", err.response?.data);
+            alert(`Error ${err.response?.status}: ${err.response?.data?.message || "Failed to create product"}`);
+        } finally { 
+            setLoading(false); 
+        }
     };
 
+    /**
+     * Updates local state and synchronizes Category ID based on selection.
+     */
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // 🎯 Automated Category ID Linking
         if (name === "categoryName") {
             const selected = categoryMap.find(cat => cat.name === value);
             setFormData({
@@ -123,24 +148,24 @@ const AddProduct = () => {
 
     return (
         <div className="space-y-8 p-6">
-            {/* VIEW SELECTOR */}
+            {/* Interface Toggle: Manual vs Bulk */}
             <div className="flex justify-between items-center bg-[#161b2c] p-4 rounded-3xl border border-white/5 shadow-2xl">
                 <div className="flex gap-2">
                     <button onClick={() => setView("manual")} className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${view === 'manual' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>MANUAL ENTRY</button>
-                    <button onClick={() => setView("bulk")} className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${view === 'bulk' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>BULK EXCEL</button>
+                    <button onClick={() => setView("bulk")} className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${view === 'bulk' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>BULK IMPORT</button>
                 </div>
                 {view === "bulk" && (
                     <button onClick={downloadTemplate} className="text-[10px] font-black text-cyan-500 hover:text-cyan-400 flex items-center gap-2 px-4 transition-all">
-                        GET TEMPLATE
+                        DOWNLOAD TEMPLATE
                     </button>
                 )}
             </div>
 
-            {/* PROGRESS BAR */}
+            {/* Upload Progress Indicator */}
             {loading && view === "bulk" && (
                 <div className="bg-[#161b2c] border border-emerald-500/20 p-6 rounded-3xl animate-in slide-in-from-top-4">
                     <div className="flex justify-between text-[10px] font-black mb-3 text-emerald-500 uppercase">
-                        <span>Syncing Registry...</span>
+                        <span>Synchronizing Database...</span>
                         <span>{progress.current} / {progress.total}</span>
                     </div>
                     <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
@@ -149,7 +174,7 @@ const AddProduct = () => {
                 </div>
             )}
 
-            {/* VIEWS */}
+            {/* Form Views */}
             {view === "manual" ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
                     <div className="lg:col-span-2 bg-[#161b2c] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
@@ -179,12 +204,12 @@ const AddProduct = () => {
                             </div>
                             <textarea name="description" value={formData.description} onChange={handleChange} rows="4" className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500 transition-all resize-none" placeholder="Product Description..."></textarea>
                             <button type="submit" disabled={loading} className="w-full py-4 bg-blue-600 rounded-2xl font-black text-[10px] text-white tracking-widest hover:bg-blue-700 active:scale-[0.98] transition-all">
-                                {loading ? "PROCESSING..." : "CREATE PRODUCT"}
+                                {loading ? "PROCESSING..." : "REGISTER PRODUCT"}
                             </button>
                         </form>
                     </div>
 
-                    {/* LIVE PREVIEW */}
+                    {/* Live Catalog Preview */}
                     <div className="lg:col-span-1">
                         <div className="bg-[#161b2c] p-4 rounded-[2.5rem] border border-white/5 shadow-2xl sticky top-8">
                             <div className="aspect-[4/3] bg-slate-800 rounded-3xl mb-4 overflow-hidden relative">
@@ -203,37 +228,37 @@ const AddProduct = () => {
                     </div>
                 </div>
             ) : (
-                /* BULK VIEW */
+                /* Bulk Data Dropzone */
                 <div className="flex flex-col items-center justify-center py-24 bg-[#161b2c] border-2 border-dashed border-white/10 rounded-[3rem] animate-in zoom-in-95 duration-500">
                     <div className="text-center space-y-6">
                         <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto text-emerald-500 shadow-inner">
                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                         </div>
-                        <h2 className="text-xl font-bold text-white uppercase tracking-tighter">Bulk Registry Import</h2>
+                        <h2 className="text-xl font-bold text-white uppercase tracking-tighter">Bulk Product Import</h2>
                         <label className={`inline-block cursor-pointer bg-emerald-600 px-12 py-4 rounded-2xl font-black text-[10px] text-white tracking-widest hover:bg-emerald-700 transition-all ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
-                            {loading ? "PROCESSING..." : "CHOOSE FILE"}
+                            {loading ? "PROCESSING..." : "SELECT DATA FILE"}
                             <input type="file" accept=".xlsx, .xls, .csv" onChange={handleFileUpload} className="hidden" />
                         </label>
                     </div>
                 </div>
             )}
 
-            {/* 📊 SUMMARY MODAL */}
+            {/* Transactional Summary Report */}
             {showSummary && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <div className="bg-[#161b2c] border border-white/10 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl text-center">
-                        <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-8">Sync Report</h2>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tighter mb-8">Import Summary</h2>
                         <div className="grid grid-cols-2 gap-4 mb-8">
                             <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl">
                                 <p className="text-emerald-500 text-3xl font-black">{importSummary.success}</p>
-                                <p className="text-[9px] font-black text-emerald-500/60 uppercase">Success</p>
+                                <p className="text-[9px] font-black text-emerald-500/60 uppercase">Successful</p>
                             </div>
                             <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl">
                                 <p className="text-red-500 text-3xl font-black">{importSummary.failures.length}</p>
-                                <p className="text-[9px] font-black text-red-500/60 uppercase">Failed</p>
+                                <p className="text-[9px] font-black text-red-500/60 uppercase">Errors</p>
                             </div>
                         </div>
-                        <button onClick={() => setShowSummary(false)} className="w-full py-4 bg-white text-[#161b2c] font-black text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 uppercase">Dismiss</button>
+                        <button onClick={() => setShowSummary(false)} className="w-full py-4 bg-white text-[#161b2c] font-black text-[10px] tracking-widest rounded-2xl hover:bg-slate-200 uppercase">Close Report</button>
                     </div>
                 </div>
             )}
