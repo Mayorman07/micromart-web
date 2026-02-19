@@ -1,9 +1,13 @@
-// src/pages/Auth/ResetPassword.jsx
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Snowfall from "../../components/Snowfall"; 
 
+/**
+ * ResetPassword Component
+ * Allows users to establish a new password using a verified token from their email.
+ * Interfaces with Spring Boot password-reset/reset endpoint.
+ */
 const ResetPassword = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -14,7 +18,7 @@ const ResetPassword = () => {
     const [message, setMessage] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
-    // Regex Validations
+    // Complexity Validations (Aligns with standard backend DTO validation)
     const validations = {
         hasLower: /[a-z]/.test(passwords.newPassword),
         hasUpper: /[A-Z]/.test(passwords.newPassword),
@@ -30,17 +34,22 @@ const ResetPassword = () => {
         }
     };
 
+    /**
+     * Submits the new password and token to the server.
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!validations.hasLower || !validations.hasUpper || !validations.hasSpecial || !validations.hasLength) {
-            setMessage("Password does not meet complexity requirements.");
+        // Client-side guard for complexity
+        const isComplex = Object.values(validations).every(v => v === true);
+        if (!isComplex) {
+            setMessage("Password must meet all complexity requirements.");
             setStatus("error");
             return;
         }
 
         if (passwords.newPassword !== passwords.confirmPassword) {
-            setMessage("Passwords do not match!");
+            setMessage("Passwords do not match.");
             setStatus("error");
             return;
         }
@@ -55,95 +64,95 @@ const ResetPassword = () => {
             setStatus("success");
         } catch (error) {
             setStatus("error");
-            setMessage(error.response?.data?.message || "Link expired or invalid.");
+            setMessage(error.response?.data?.message || "Reset link is invalid or has expired.");
         }
     };
 
-    // ✅ Success State
+    // Success State View
     if (status === "success") {
         return (
             <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#00f2fe] to-[#4facfe] relative overflow-hidden font-sans">
                 <Snowfall />
-                <div className="relative z-10 w-full max-w-md bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/50 text-center mx-4">
-                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                        <span className="text-3xl">✅</span>
+                <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-white/50 text-center mx-4">
+                    <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-100">
+                        <span className="text-2xl">✓</span>
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Password Reset!</h2>
-                    <p className="text-slate-500 mb-6">You can now login with your new password.</p>
+                    <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Success!</h2>
+                    <p className="text-slate-500 mb-8 font-medium">Your password has been updated. You can now sign in with your new credentials.</p>
                     <button 
                         onClick={() => navigate("/login")}
-                        className="w-full py-3 rounded-xl text-white font-bold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/30 transition-all"
+                        className="w-full py-4 rounded-xl text-white font-bold bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-xl shadow-blue-500/20 transition-all uppercase tracking-widest text-xs"
                     >
-                        Go to Login
+                        Return to Login
                     </button>
                 </div>
             </div>
         );
     }
 
-    // 📝 Reset Form State
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#00f2fe] to-[#4facfe] relative overflow-hidden font-sans py-10">
             <Snowfall />
             
-            <div className="relative z-10 w-full max-w-md bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/50 text-center mx-4">
-                <h2 className="text-3xl font-bold text-slate-800 mb-6">Reset Password</h2>
+            <div className="relative z-10 w-full max-w-md bg-white/85 backdrop-blur-xl p-10 rounded-[2.5rem] shadow-2xl border border-white/50 text-center mx-4">
+                <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight uppercase">Update Password</h2>
+                <p className="text-slate-500 mb-8 text-sm font-medium">Please enter and confirm your new password.</p>
                 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
                     
-                    {/* New Password with Eye Icon */}
+                    {/* New Password Input */}
                     <div className="relative">
-                        <label className="block mb-1 text-slate-700 font-semibold text-xs uppercase tracking-wide">New Password</label>
+                        <label className="block mb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Password</label>
                         <input 
                             name="newPassword" 
                             type={showPassword ? "text" : "password"} 
-                            placeholder="Enter new password"
+                            placeholder="Min. 8 characters"
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/40 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-slate-700 placeholder-slate-400 pr-10"
+                            className="w-full px-4 py-3.5 rounded-2xl bg-white/60 border border-white focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-slate-800 placeholder-slate-400 pr-12 shadow-sm"
                         />
                          <button 
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-8 text-slate-400 hover:text-slate-600 transition-colors"
+                            className="absolute right-4 top-10 text-slate-400 hover:text-blue-600 transition-colors"
                         >
-                            {showPassword ? "🙈" : "👁️"}
+                            {showPassword ? "Hide" : "Show"}
                         </button>
                     </div>
 
-                    {/* Dynamic Validation Checklist */}
-                    <div className="grid grid-cols-2 gap-2 mb-2">
+                    {/* Complexity Checklist */}
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 px-1 mb-2">
                         <ValidationItem isValid={validations.hasLower} text="Lowercase" />
                         <ValidationItem isValid={validations.hasUpper} text="Uppercase" />
-                        <ValidationItem isValid={validations.hasSpecial} text="Special char" />
-                        <ValidationItem isValid={validations.hasLength} text="8+ chars" />
+                        <ValidationItem isValid={validations.hasSpecial} text="Special Character" />
+                        <ValidationItem isValid={validations.hasLength} text="8+ Characters" />
                     </div>
 
-                    {/* Confirm Password */}
+                    {/* Confirm Password Input */}
                     <div>
-                        <label className="block mb-1 text-slate-700 font-semibold text-xs uppercase tracking-wide">Confirm Password</label>
+                        <label className="block mb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm Password</label>
                         <input 
                             name="confirmPassword" 
                             type="password" 
-                            placeholder="Confirm new password"
+                            placeholder="Re-type password"
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-3 rounded-xl bg-white/60 border border-white/40 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-slate-700 placeholder-slate-400"
+                            className="w-full px-4 py-3.5 rounded-2xl bg-white/60 border border-white focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-slate-800 placeholder-slate-400 shadow-sm"
                         />
                     </div>
 
                     {status === "error" && (
-                        <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-sm font-medium text-center">
-                            ⚠️ {message}
+                        <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[11px] font-bold text-center uppercase tracking-tighter">
+                            {message}
                         </div>
                     )}
 
                     <button 
                         type="submit" 
                         disabled={status === "loading"}
-                        className="w-full py-3.5 rounded-xl text-white font-bold text-lg bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 mt-2"
+                        className="w-full py-4 rounded-xl text-white font-black text-xs uppercase tracking-widest bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-xl shadow-blue-500/20 transition-all transform hover:-translate-y-0.5 mt-2"
                     >
-                        {status === "loading" ? "Resetting..." : "Reset Password"}
+                        {status === "loading" ? "Updating..." : "Establish New Password"}
                     </button>
                 </form>
             </div>
@@ -151,10 +160,12 @@ const ResetPassword = () => {
     );
 };
 
-// Helper Component for checklist (Tailwind version)
+/**
+ * ValidationItem Helper
+ */
 const ValidationItem = ({ isValid, text }) => (
-    <div className={`flex items-center gap-2 text-xs font-medium transition-colors duration-300 ${isValid ? "text-green-600" : "text-slate-400"}`}>
-        <span>{isValid ? "✓" : "•"}</span>
+    <div className={`flex items-center gap-2 text-[9px] font-black uppercase tracking-tight transition-colors duration-300 ${isValid ? "text-emerald-600" : "text-slate-300"}`}>
+        <span className="text-[14px] leading-none">{isValid ? "✓" : "•"}</span>
         {text}
     </div>
 );
