@@ -2,13 +2,17 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const OperativesList = () => {
+/**
+ * UserList Component
+ * Displays a paginated list of registered users with search capabilities.
+ * Integrates with Spring Data Pageable structure from the backend.
+ */
+const UserList = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     
-    // 📊 Pagination state matches Spring Data Page structure
     const [pagination, setPagination] = useState({
         currentPage: 0,
         totalPages: 0,
@@ -16,12 +20,14 @@ const OperativesList = () => {
         pageSize: 15
     });
 
+    /**
+     * Fetches user data from the backend.
+     * Maps the 'content' array and pagination metadata from the Spring Page object.
+     */
     const fetchUsers = useCallback(async (page = 0, query = "") => {
         setLoading(true);
         try {
             const token = localStorage.getItem("token");
-            
-            // 🎯 Calling your verified backend endpoint
             const response = await axios.get(`http://127.0.0.1:7082/users/users/all`, {
                 params: {
                     page: page,
@@ -33,7 +39,6 @@ const OperativesList = () => {
                 }
             });
 
-            // 🛠️ Destructure the 'content' array from the Spring Page object
             const { content, totalPages, totalElements, number } = response.data;
             
             setUsers(content || []);
@@ -44,8 +49,8 @@ const OperativesList = () => {
                 totalElements: totalElements
             }));
         } catch (error) {
-            console.error("Registry Sync Failed:", error);
-            // Handle 401/403 by redirecting to login if token is invalid
+            console.error("Fetch Error: Failed to retrieve user list", error);
+            // Auth check: Redirect to login if session is expired
             if (error.response?.status === 401 || error.response?.status === 403) {
                 navigate("/login");
             }
@@ -54,7 +59,7 @@ const OperativesList = () => {
         }
     }, [pagination.pageSize, navigate]);
 
-    // 🕵️‍♂️ Debounce Logic: Wait 500ms after user stops typing to fire API call
+    // Debounced search to limit API requests while typing
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchUsers(0, searchTerm);
@@ -65,14 +70,13 @@ const OperativesList = () => {
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8 pb-20">
-            {/* TOP BAR */}
-            <div className="flex justify-between items-end">
+            {/* Header and Search */}
+            <div className="flex justify-between items-end px-4">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight">Operative Registry</h1>
-                    <p className="text-slate-500 text-sm mt-2">Manage personnel clearance and identity.</p>
+                    <h1 className="text-3xl font-black text-white tracking-tight uppercase">User Management</h1>
+                    <p className="text-slate-500 text-sm mt-1">Manage user accounts and access permissions.</p>
                 </div>
                 
-                {/* SEARCH INPUT */}
                 <div className="relative w-80">
                     <input 
                         type="text"
@@ -93,66 +97,68 @@ const OperativesList = () => {
                 </div>
             </div>
 
-            {/* TABLE CONTAINER */}
-            <div className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl relative">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-white/5 border-b border-white/5">
-                            <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Operative</th>
-                            <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Email Identity</th>
-                            <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
-                            <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Active</th>
-                            <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        {users.length > 0 ? (
-                            users.map((user) => (
-                                <tr key={user.userId} className="group hover:bg-white/[0.02] transition-colors">
-                                    <td className="p-6">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-black font-bold text-xs">
-                                                {user.firstName[0]}{user.lastName[0]}
+            {/* User Data Table */}
+            <div className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-white/5 border-b border-white/5">
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">User</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Last Login</th>
+                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {users.length > 0 ? (
+                                users.map((user) => (
+                                    <tr key={user.userId} className="group hover:bg-white/[0.02] transition-colors">
+                                        <td className="p-6">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-black font-bold text-xs">
+                                                    {user.firstName[0]}{user.lastName[0]}
+                                                </div>
+                                                <span className="text-white font-bold">{user.firstName} {user.lastName}</span>
                                             </div>
-                                            <span className="text-white font-bold">{user.firstName} {user.lastName}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-6 text-slate-400 text-sm font-medium">{user.email}</td>
-                                    <td className="p-6">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase ${
-                                            user.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
-                                        }`}>
-                                            {user.status}
-                                        </span>
-                                    </td>
-                                    <td className="p-6 text-slate-500 text-xs font-mono">
-                                        {user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleDateString() : 'NEVER'}
-                                    </td>
-                                    <td className="p-6">
-                                        <button 
-                                            onClick={() => navigate(`/admin/view/${user.email}`)}
-                                            className="text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all"
-                                        >
-                                            View Dossier
-                                        </button>
+                                        </td>
+                                        <td className="p-6 text-slate-400 text-sm font-medium">{user.email}</td>
+                                        <td className="p-6 text-center">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                                                user.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'
+                                            }`}>
+                                                {user.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-6 text-slate-500 text-xs font-mono text-center">
+                                            {user.lastLoggedIn ? new Date(user.lastLoggedIn).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="p-6 text-right">
+                                            <button 
+                                                onClick={() => navigate(`/admin/view/${user.email}`)}
+                                                className="text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all"
+                                            >
+                                                View Details
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="p-20 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
+                                        {loading ? "Loading user records..." : "No users found."}
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="5" className="p-20 text-center text-slate-500 font-medium italic">
-                                    {loading ? "Decrypting registry data..." : "No operatives found in this sector."}
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            {/* PAGINATION */}
-            <div className="flex justify-between items-center px-4">
+            {/* Pagination Controls */}
+            <div className="flex justify-between items-center px-6">
                 <p className="text-slate-500 text-xs font-medium">
-                    Showing <span className="text-white">{users.length}</span> of {pagination.totalElements} Operatives
+                    Showing <span className="text-white">{users.length}</span> of {pagination.totalElements} users
                 </p>
                 <div className="flex gap-2">
                     <button 
@@ -175,4 +181,4 @@ const OperativesList = () => {
     );
 };
 
-export default OperativesList;
+export default UserList;
