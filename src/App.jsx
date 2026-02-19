@@ -32,6 +32,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/newsletter" element={<ComingSoon />} />
+
 
         {/* ==============================
             🔐 ADMIN WORLD
