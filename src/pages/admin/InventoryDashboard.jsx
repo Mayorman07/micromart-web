@@ -24,7 +24,9 @@ const InventoryDashboard = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
+            console.log(response);
             const items = response.data.content || [];
+            console.log(items);
 
             // Internal Mapping: Standardizing API response to UI model
             const standardizedItems = items.map((item, index) => ({

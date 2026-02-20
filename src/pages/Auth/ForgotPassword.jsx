@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../services/api"; 
 import { Link } from "react-router-dom"; 
 import LiquidBackgroundDeep from "../../components/LiquidBackgroundDeep";
 import Snowfall from "../../components/Snowfall"; 
@@ -7,7 +7,7 @@ import Snowfall from "../../components/Snowfall";
 /**
  * ForgotPassword Component
  * Initiates the password recovery process by sending a reset link to the user's email.
- * Connects to the Spring Boot password-reset-request endpoint.
+ * Connects to the Spring Boot password-reset-request endpoint via the centralized API.
  */
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
@@ -23,20 +23,21 @@ const ForgotPassword = () => {
         setErrorMessage("");
 
         try {
-            // Targets Spring Boot @PostMapping for password reset requests
-            await axios.post("http://127.0.0.1:7082/users/password-reset/request", { email });
+            /** * Utilizing the api instance ensures consistent baseURL and 
+             * global interceptor configurations are applied 
+             */
+            await api.post("/users/password-reset/request", { email });
             setStatus("success");
         } catch (error) {
             console.error("Reset Request Error:", error);
             setStatus("error");
+            // Extracting standardized error message from response
             setErrorMessage(error.response?.data?.message || "An error occurred. Please try again later.");
         }
     };
 
-    // Standardized input styling for the recovery form
     const inputStyle = "w-full px-4 py-3.5 rounded-xl bg-slate-50/50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all font-medium shadow-sm";
 
-    // Success View: Rendered after the link has been dispatched
     if (status === "success") {
         return (
             <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden font-sans">
@@ -45,7 +46,7 @@ const ForgotPassword = () => {
 
                 <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-xl p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,180,216,0.3)] border border-white/60 text-center mx-4">
                     <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-100">
-                        <span className="text-4xl">✉️</span>
+                        <span className="text-4xl" role="img" aria-label="envelope">✉️</span>
                     </div>
                     <h2 className="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Check your email</h2>
                     <p className="text-slate-500 mb-6 font-medium leading-relaxed">
@@ -68,15 +69,12 @@ const ForgotPassword = () => {
         );
     }
 
-    // Default Form View
     return (
         <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden font-sans">
-            
             <LiquidBackgroundDeep />
             <Snowfall />
 
             <div className="relative z-10 w-full max-w-md p-10 mx-4 text-center bg-white/95 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,180,216,0.3)] border border-white/60">
-                
                 <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-cyan-50/80 flex items-center justify-center text-cyan-600 border border-cyan-100">
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
