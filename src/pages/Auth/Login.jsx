@@ -3,6 +3,7 @@ import api from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import LiquidBackgroundDeep from "../../components/LiquidBackgroundDeep";
 import Snowfall from "../../components/Snowfall";
+import { useToast } from "../../contexts/ToastContext"; 
 
 /**
  * Login Component
@@ -11,8 +12,8 @@ import Snowfall from "../../components/Snowfall";
  */
 const Login = () => {
     const navigate = useNavigate();
+    const { showToast } = useToast(); 
     const [status, setStatus] = useState("idle");
-    const [errorMessage, setErrorMessage] = useState("");
     
     const [formData, setFormData] = useState({
         email: "",
@@ -30,30 +31,29 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setStatus("loading");
-        setErrorMessage("");
 
         try {
-            // Using api instance for consistent routing
             const response = await api.post("/users/users/login", formData);
 
-            // 🎯 Extracting refreshToken from response
             const { token, refreshToken, userId } = response.data;
             
             if (!token) throw new Error("Authentication failed: No token provided.");
 
-            // ✅ Store session data AND refresh token
             localStorage.setItem("token", token);
             localStorage.setItem("refreshToken", refreshToken); 
             localStorage.setItem("userId", userId);
             
             setStatus("success");
+            showToast("Welcome to MicroMart! Access granted.", "success");
             
-            setTimeout(() => navigate("/dashboard"), 800);
+            setTimeout(() => navigate("/marketplace"), 800);
 
         } catch (error) {
             console.error("Login Error:", error);
             setStatus("error");
-            setErrorMessage(error.response?.data?.message || "Invalid email or password.");
+            const errMsg = error.response?.data?.message || "Invalid email or password.";
+            
+            showToast(errMsg, "error");
         }
     };
 
@@ -88,10 +88,6 @@ const Login = () => {
                     <div className="flex items-center justify-end">
                         <button type="button" onClick={() => navigate("/forgot-password")} className="text-xs text-cyan-600 hover:text-cyan-800 font-bold transition-colors uppercase tracking-tighter">Forgot Password?</button>
                     </div>
-
-                    {status === "error" && (
-                        <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium text-center">{errorMessage}</div>
-                    )}
 
                     <button 
                         type="submit" 

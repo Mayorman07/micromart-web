@@ -1,6 +1,6 @@
 import { useState } from "react";
 import * as XLSX from "xlsx"; 
-import api from "../../services/api"; // Utilizing centralized API instance for automated auth management
+import api from "../../services/api"; 
 
 /**
  * Static Category Mapping
@@ -10,7 +10,8 @@ const categoryMap = [
     { id: 3, name: "RC Hobbies" },
     { id: 3, name: "Drones" },
     { id: 1, name: "Eyewear" },
-    { id: 4, name: "Anime Collectibles" }
+    { id: 4, name: "Anime Collectibles" },
+    { id: 5, name: "Pokemon" }
 ];
 
 /**

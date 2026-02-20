@@ -3,18 +3,23 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 // GLOBAL CONTEXTS
 import { ToastProvider } from "./contexts/ToastContext"; 
 
-//  PUBLIC & AUTHENTICATION MODULES
+// LAYOUTS
+import AdminLayout from "./layouts/AdminLayout";
+import UserLayout from "./layouts/UserLayout"; 
+
+// PUBLIC & AUTHENTICATION MODULES
 import VerifyEmail from "./pages/Auth/VerifyEmail";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import UserDashboard from './pages/Dashboard/Dashboard'; 
+import ProductGallery from "./pages/Dashboard/ProductGallery";
+import Orders from "./pages/Dashboard/Orders"; 
 import ComingSoon from "./pages/General/ComingSoon"; 
 
 // ADMINISTRATIVE CORE
 import AdminLogin from "./pages/Auth/AdminLogin";
-import AdminLayout from "./layouts/AdminLayout";       
 import AdminDashboard from "./pages/admin/AdminDashboard"; 
 import AddProduct from "./pages/admin/AddProduct";     
 import UserDetails from "./pages/admin/UserDetails"; 
@@ -26,7 +31,6 @@ import ProfileSettings from "./pages/admin/ProfileSettings";
 /**
  * MicroMart App Entry Point
  * Defines the routing hierarchy and layout structures.
- * Organized into Public, Auth, and Restricted Administrative zones.
  */
 function App() {
   return (
@@ -45,14 +49,18 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
+          {/* --- PROTECTED USER ZONE --- */}
+          <Route element={<UserLayout />}>
+              <Route path="/marketplace" element={<ProductGallery />} />
+              <Route path="/orders" element={<Orders />} /> {/* ADDED: Protected Orders route */}
+          </Route>
+
           {/* --- ADMINISTRATIVE RESTRICTED ZONE --- */}
           <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Protected Admin Layout Shell */}
           <Route path="/admin" element={<AdminLayout />}>
-              {/* Automatic redirect to dashboard on base /admin path */}
               <Route index element={<Navigate to="dashboard" replace />} />
-              
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<AddProduct />} />
               <Route path="view/:email" element={<UserDetails />} />
