@@ -1,12 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import api from "../../services/api";
 import TableSkeleton from "../../components/TableSkeleton"; 
+import { useToast } from "../../contexts/ToastContext"; 
 
 /**
  * InventoryRegistry Component
  * Manages the display and stock adjustment of product SKUs.
  */
 const InventoryRegistry = () => {
+    const { showToast } = useToast(); 
+    
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -32,26 +35,36 @@ const InventoryRegistry = () => {
             }));
         } catch (error) {
             console.error("Data Fetch Error: Failed to retrieve inventory list", error);
+            showToast("Failed to load inventory data.", "error"); 
         } finally {
             setLoading(false);
         }
-    }, [pagination.pageSize]);
+    }, [pagination.pageSize, showToast]); 
 
     const handleAdjustStock = async (skuCode, currentQuantity) => {
-        const input = prompt(`Current stock for SKU ${skuCode} is ${currentQuantity}. Enter units to add:`, "0");
+        const input = prompt(`Current stock for SKU ${skuCode} is ${currentQuantity}.\n\nEnter units to add (use a negative number to subtract):`, "0");
         
-        const amountToAdd = parseInt(input);
-        if (!input || isNaN(amountToAdd) || amountToAdd === 0) return;
+        const amount = parseInt(input);
+        if (!input || isNaN(amount) || amount === 0) return;
 
         try {
             await api.put(`/inventory/api/inventory/add`, {
                 skuCode: skuCode, 
-                quantity: amountToAdd
+                quantity: amount
             });
             fetchProducts(pagination.currentPage, searchTerm);
+            
+            const actionVerb = amount > 0 ? "added" : "removed";
+            const preposition = amount > 0 ? "to" : "from";
+            const displayAmount = Math.abs(amount); 
+            
+            showToast(`Successfully ${actionVerb} ${displayAmount} units ${preposition} ${skuCode}`, "success");
+            
         } catch (error) {
             console.error("Update Error:", error.response?.data);
-            alert(`Failed to update stock: ${error.response?.data?.message || "Server error"}`);
+            const errMsg = error.response?.data?.message || "Server error";
+            
+            showToast(`Failed to update stock: ${errMsg}`, "error");
         }
     };
 
