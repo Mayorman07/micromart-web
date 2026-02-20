@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
-import api from "../../services/api"; // Utilizing centralized API instance for automated auth management
+import api from "../../services/api"; 
 import { useNavigate } from "react-router-dom";
+import TableSkeleton from "../../components/TableSkeleton";
 
 /**
  * UserList Component
@@ -111,7 +112,10 @@ const UserList = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {users.length > 0 ? (
+                            {/* Render the Skeleton if data is fetching */}
+                            {loading ? (
+                                <TableSkeleton rows={5} columns={5} />
+                            ) : users.length > 0 ? (
                                 users.map((user) => (
                                     <tr key={user.userId} className="group hover:bg-white/[0.02] transition-colors">
                                         <td className="p-6">
@@ -146,7 +150,7 @@ const UserList = () => {
                             ) : (
                                 <tr>
                                     <td colSpan="5" className="p-20 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
-                                        {loading ? "Loading operative records..." : "No records found matching criteria."}
+                                        No records found matching criteria.
                                     </td>
                                 </tr>
                             )}
@@ -162,14 +166,14 @@ const UserList = () => {
                 </p>
                 <div className="flex gap-2">
                     <button 
-                        disabled={pagination.currentPage === 0}
+                        disabled={pagination.currentPage === 0 || loading}
                         onClick={() => fetchUsers(pagination.currentPage - 1, searchTerm)}
                         className="p-3 rounded-xl bg-[#161b2c] border border-white/5 text-white disabled:opacity-20 hover:bg-white/5 transition-all"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </button>
                     <button 
-                        disabled={pagination.currentPage + 1 >= pagination.totalPages}
+                        disabled={pagination.currentPage + 1 >= pagination.totalPages || loading}
                         onClick={() => fetchUsers(pagination.currentPage + 1, searchTerm)}
                         className="p-3 rounded-xl bg-[#161b2c] border border-white/5 text-white disabled:opacity-20 hover:bg-white/5 transition-all"
                     >
