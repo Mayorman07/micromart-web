@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import api from "../../services/api"; 
+import api from "../../services/api";
+import TableSkeleton from "../../components/TableSkeleton"; 
 
 /**
  * InventoryDashboard Component
  * Provides a high-level overview of system assets with real-time search functionality.
- * Interfaces with the Inventory microservice via the centralized security interceptor.
  */
 const InventoryDashboard = () => {
     const [inventory, setInventory] = useState([]);
@@ -12,24 +12,12 @@ const InventoryDashboard = () => {
     const [searchTerm, setSearchTerm] = useState(""); 
     const [loading, setLoading] = useState(true);
 
-    /**
-     * Fetches all inventory items from the service registry.
-     * Standardizes the backend data structure into a consistent UI View Model.
-     */
     const fetchInventory = async () => {
         setLoading(true);
         try {
-            /** * The 'Authorization' header is now automatically handled by the 
-             * api.interceptors.request in api.js.
-             */
             const response = await api.get("/inventory/api/inventory/all");
-
-            // Extracting the content array from the Spring Data Page envelope
             const items = response.data.content || [];
 
-            /** * Internal Mapping: Standardizing API response to UI model.
-             * Specifically maps backend 'quantity' to 'stockQuantity' for UI progress bars.
-             */
             const standardizedItems = items.map((item, index) => ({
                 id: index, 
                 name: item.name,
@@ -50,10 +38,6 @@ const InventoryDashboard = () => {
         }
     };
 
-    /**
-     * Effect Hook: Handles client-side filtering logic.
-     * Monitors changes in searchTerm and inventory state to update the view.
-     */
     useEffect(() => {
         const results = inventory.filter(item =>
             item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,7 +54,6 @@ const InventoryDashboard = () => {
 
     return (
         <div className="p-6 space-y-6 animate-in fade-in duration-700">
-            {/* Control Header: Asset Summary and Search */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="flex gap-6 w-full max-w-2xl">
                     <div className="bg-[#161b2c] p-6 rounded-[2rem] border border-white/5 shadow-2xl flex-1">
@@ -81,9 +64,13 @@ const InventoryDashboard = () => {
 
                 <div className="relative w-full md:w-96 group">
                     <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
-                        <svg className="w-4 h-4 text-slate-500 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        {loading ? (
+                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                            <svg className="w-4 h-4 text-slate-500 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        )}
                     </div>
                     <input 
                         type="text"
@@ -95,7 +82,6 @@ const InventoryDashboard = () => {
                 </div>
             </div>
 
-            {/* Inventory Data Table */}
             <div className="bg-[#161b2c] rounded-[2.5rem] border border-white/5 overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -109,7 +95,10 @@ const InventoryDashboard = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {filteredInventory.length === 0 && !loading ? (
+                            {/* Render the Skeleton if data is actively fetching */}
+                            {loading ? (
+                                <TableSkeleton rows={5} columns={5} />
+                            ) : filteredInventory.length === 0 ? (
                                 <tr>
                                     <td colSpan="5" className="p-20 text-center text-slate-500 font-bold uppercase tracking-widest text-xs">
                                         No assets matching "{searchTerm}"

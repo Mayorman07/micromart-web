@@ -1,11 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
-import api from "../../services/api"; 
-import Snowfall from "../../components/Snowfall";
+import api from "../../services/api";
+import TableSkeleton from "../../components/TableSkeleton"; 
 
 /**
  * InventoryRegistry Component
  * Manages the display and stock adjustment of product SKUs.
- * Interfaces with the Inventory microservice via the centralized security interceptor.
  */
 const InventoryRegistry = () => {
     const [products, setProducts] = useState([]);
@@ -17,10 +16,6 @@ const InventoryRegistry = () => {
         pageSize: 15
     });
 
-    /**
-     * Fetches paginated inventory data from the API.
-     * The 'Authorization' header and baseURL are handled by the api instance.
-     */
     const fetchProducts = useCallback(async (page = 0, query = "") => {
         setLoading(true);
         try {
@@ -42,10 +37,6 @@ const InventoryRegistry = () => {
         }
     }, [pagination.pageSize]);
 
-    /**
-     * Handles stock level adjustments for a specific SKU.
-     * Triggers a PUT request to update the backend inventory state using additive logic.
-     */
     const handleAdjustStock = async (skuCode, currentQuantity) => {
         const input = prompt(`Current stock for SKU ${skuCode} is ${currentQuantity}. Enter units to add:`, "0");
         
@@ -53,13 +44,10 @@ const InventoryRegistry = () => {
         if (!input || isNaN(amountToAdd) || amountToAdd === 0) return;
 
         try {
-            // Securely dispatches the update to the Inventory service
             await api.put(`/inventory/api/inventory/add`, {
                 skuCode: skuCode, 
                 quantity: amountToAdd
             });
-            
-            // Refresh current view to reflect updated stock levels
             fetchProducts(pagination.currentPage, searchTerm);
         } catch (error) {
             console.error("Update Error:", error.response?.data);
@@ -107,37 +95,65 @@ const InventoryRegistry = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
-                            {products.length > 0 ? products.map((product) => (
-                                <tr key={product.id} className="hover:bg-white/[0.02] transition-colors group">
-                                    <td className="p-6">
-                                        <p className="text-white font-bold">{product.name}</p>
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-tighter font-semibold">{product.category}</p>
-                                    </td>
-                                    <td className="p-6 text-cyan-400 font-mono text-xs text-center">{product.skuCode}</td>
-                                    <td className="p-6 text-white font-medium text-center">${product.price}</td>
-                                    <td className="p-6 text-center">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${product.quantity > 10 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                                            {product.quantity} UNITS
-                                        </span>
-                                    </td>
-                                    <td className="p-6 text-right">
-                                        <button 
-                                            onClick={() => handleAdjustStock(product.skuCode, product.quantity)}
-                                            className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors border border-white/5 px-4 py-2 rounded-xl hover:bg-white/5"
-                                        >
-                                            Adjust Stock
-                                        </button>
-                                    </td>
-                                </tr>
-                            )) : (
+                            {/* Render the Skeleton matching the 15-row page size */}
+                            {loading ? (
+                                <TableSkeleton rows={15} columns={5} />
+                            ) : products.length > 0 ? (
+                                products.map((product) => (
+                                    <tr key={product.id} className="hover:bg-white/[0.02] transition-colors group">
+                                        <td className="p-6">
+                                            <p className="text-white font-bold">{product.name}</p>
+                                            <p className="text-[10px] text-slate-500 uppercase tracking-tighter font-semibold">{product.category}</p>
+                                        </td>
+                                        <td className="p-6 text-cyan-400 font-mono text-xs text-center">{product.skuCode}</td>
+                                        <td className="p-6 text-white font-medium text-center">${product.price}</td>
+                                        <td className="p-6 text-center">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${product.quantity > 10 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                {product.quantity} UNITS
+                                            </span>
+                                        </td>
+                                        <td className="p-6 text-right">
+                                            <button 
+                                                onClick={() => handleAdjustStock(product.skuCode, product.quantity)}
+                                                className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest transition-colors border border-white/5 px-4 py-2 rounded-xl hover:bg-white/5"
+                                            >
+                                                Adjust Stock
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
                                 <tr>
                                     <td colSpan="5" className="p-20 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
-                                        {loading ? "Loading inventory records..." : "No records found matching criteria."}
+                                        No records found matching criteria.
                                     </td>
                                 </tr>
                             )}
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            {/* Pagination Controls with loading safeguards */}
+            <div className="flex justify-between items-center px-6 mt-4">
+                <p className="text-slate-500 text-xs font-medium uppercase tracking-widest">
+                    Page <span className="text-white">{pagination.currentPage + 1}</span> of {pagination.totalPages}
+                </p>
+                <div className="flex gap-2">
+                    <button 
+                        disabled={pagination.currentPage === 0 || loading}
+                        onClick={() => fetchProducts(pagination.currentPage - 1, searchTerm)}
+                        className="p-3 rounded-xl bg-[#161b2c] border border-white/5 text-white disabled:opacity-20 hover:bg-white/5 transition-all"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                    <button 
+                        disabled={pagination.currentPage + 1 >= pagination.totalPages || loading}
+                        onClick={() => fetchProducts(pagination.currentPage + 1, searchTerm)}
+                        className="p-3 rounded-xl bg-[#161b2c] border border-white/5 text-white disabled:opacity-20 hover:bg-white/5 transition-all"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
