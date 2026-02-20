@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import api from "../../services/api"; // Utilizing centralized API instance for automated auth management
 import { useNavigate } from "react-router-dom";
 
 /**
  * UserList Component
  * Displays a paginated list of registered users with search capabilities.
- * Integrates with Spring Data Pageable structure from the backend.
+ * Interfaces with the Spring Boot user service via the centralized security interceptor.
  */
 const UserList = () => {
     const navigate = useNavigate();
@@ -21,24 +21,24 @@ const UserList = () => {
     });
 
     /**
-     * Fetches user data from the backend.
-     * Maps the 'content' array and pagination metadata from the Spring Page object.
+     * Fetches paginated user data from the backend.
+     * The Bearer token and baseURL are handled automatically by the api instance.
      */
     const fetchUsers = useCallback(async (page = 0, query = "") => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`http://127.0.0.1:7082/users/users/all`, {
+            /** * Targets Spring Boot @GetMapping(path ="/all").
+             * Headers are injected globally by the api service.
+             */
+            const response = await api.get(`/users/users/all`, {
                 params: {
                     page: page,
                     size: pagination.pageSize,
                     keyword: query
-                },
-                headers: { 
-                    Authorization: `Bearer ${token}` 
                 }
             });
 
+            // Extracting Spring Data Pageable metadata
             const { content, totalPages, totalElements, number } = response.data;
             
             setUsers(content || []);
@@ -50,16 +50,14 @@ const UserList = () => {
             }));
         } catch (error) {
             console.error("Fetch Error: Failed to retrieve user list", error);
-            // Auth check: Redirect to login if session is expired
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                navigate("/login");
-            }
+            /** * Interceptor handles 401/403 errors by attempting a token refresh. 
+             * If the refresh fails, the interceptor clears storage and redirects to login.
+             */
         } finally {
             setLoading(false);
         }
-    }, [pagination.pageSize, navigate]);
+    }, [pagination.pageSize]);
 
-    // Debounced search to limit API requests while typing
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchUsers(0, searchTerm);
@@ -68,19 +66,21 @@ const UserList = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, fetchUsers]);
 
+    const headerStyle = "p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest";
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8 pb-20">
-            {/* Header and Search */}
+            {/* Header and Search Interface */}
             <div className="flex justify-between items-end px-4">
                 <div>
                     <h1 className="text-3xl font-black text-white tracking-tight uppercase">User Management</h1>
                     <p className="text-slate-500 text-sm mt-1">Manage user accounts and access permissions.</p>
                 </div>
                 
-                <div className="relative w-80">
+                <div className="relative w-80 group">
                     <input 
                         type="text"
-                        placeholder="Search by name or email..."
+                        placeholder="SEARCH BY NAME OR EMAIL..."
                         className="w-full bg-[#161b2c] border border-white/10 rounded-2xl py-3.5 px-5 text-sm text-white focus:border-cyan-500 outline-none transition-all placeholder:text-slate-600 shadow-xl"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -97,17 +97,17 @@ const UserList = () => {
                 </div>
             </div>
 
-            {/* User Data Table */}
+            {/* Operatives Registry Table */}
             <div className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-white/5 border-b border-white/5">
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">User</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Last Login</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Actions</th>
+                                <th className={headerStyle}>User Details</th>
+                                <th className={headerStyle}>Email</th>
+                                <th className={`${headerStyle} text-center`}>Status</th>
+                                <th className={`${headerStyle} text-center`}>Last Activity</th>
+                                <th className={`${headerStyle} text-right`}>Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -146,7 +146,7 @@ const UserList = () => {
                             ) : (
                                 <tr>
                                     <td colSpan="5" className="p-20 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">
-                                        {loading ? "Loading user records..." : "No users found."}
+                                        {loading ? "Loading operative records..." : "No records found matching criteria."}
                                     </td>
                                 </tr>
                             )}
@@ -157,8 +157,8 @@ const UserList = () => {
 
             {/* Pagination Controls */}
             <div className="flex justify-between items-center px-6">
-                <p className="text-slate-500 text-xs font-medium">
-                    Showing <span className="text-white">{users.length}</span> of {pagination.totalElements} users
+                <p className="text-slate-500 text-xs font-medium uppercase tracking-widest">
+                    Displaying <span className="text-white">{users.length}</span> of {pagination.totalElements} Operatives
                 </p>
                 <div className="flex gap-2">
                     <button 
@@ -166,14 +166,14 @@ const UserList = () => {
                         onClick={() => fetchUsers(pagination.currentPage - 1, searchTerm)}
                         className="p-3 rounded-xl bg-[#161b2c] border border-white/5 text-white disabled:opacity-20 hover:bg-white/5 transition-all"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </button>
                     <button 
                         disabled={pagination.currentPage + 1 >= pagination.totalPages}
                         onClick={() => fetchUsers(pagination.currentPage + 1, searchTerm)}
                         className="p-3 rounded-xl bg-[#161b2c] border border-white/5 text-white disabled:opacity-20 hover:bg-white/5 transition-all"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </button>
                 </div>
             </div>

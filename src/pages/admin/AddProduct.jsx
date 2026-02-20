@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import * as XLSX from "xlsx"; 
+import api from "../../services/api"; // Utilizing centralized API instance for automated auth management
 
 /**
  * Static Category Mapping
@@ -13,6 +13,11 @@ const categoryMap = [
     { id: 4, name: "Anime Collectibles" }
 ];
 
+/**
+ * AddProduct Component
+ * Orchestrates product registration through manual entry or bulk Excel importation.
+ * Leverages the centralized api service for secure cross-origin requests.
+ */
 const AddProduct = () => {
     const [view, setView] = useState("manual"); 
     const [loading, setLoading] = useState(false);
@@ -20,7 +25,6 @@ const AddProduct = () => {
     const [showSummary, setShowSummary] = useState(false);
     const [importSummary, setImportSummary] = useState({ success: 0, failures: [] });
 
-    // Initial state matching the default category selection
     const [formData, setFormData] = useState({
         name: "", 
         price: "", 
@@ -33,7 +37,7 @@ const AddProduct = () => {
     });
 
     /**
-     * Generates and downloads an Excel template for bulk product uploads.
+     * Downloads a standardized Excel template for bulk uploads.
      */
     const downloadTemplate = () => {
         const headers = [["name", "price", "stockQuantity", "categoryId", "categoryName", "description", "imageUrl", "skuCode"]];
@@ -44,8 +48,8 @@ const AddProduct = () => {
     };
 
     /**
-     * Handles bulk import via Excel file.
-     * Parses data, cleans keys, and performs sequential API POST requests.
+     * Handles bulk import via Excel.
+     * Cleans data keys and ensures numeric types match backend DTO requirements.
      */
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
@@ -53,7 +57,6 @@ const AddProduct = () => {
 
         const reader = new FileReader();
         setLoading(true);
-        const token = localStorage.getItem("token"); 
 
         reader.onload = async (evt) => {
             const wb = XLSX.read(evt.target.result, { type: "binary" });
@@ -65,20 +68,21 @@ const AddProduct = () => {
 
             for (let i = 0; i < data.length; i++) {
                 const row = data[i];
-                // Normalize keys to lowercase for consistent processing
+                /** * Normalizing keys to lowercase to prevent '400 Bad Request' errors 
+                 * caused by casing mismatches in Excel headers. 
+                 */
                 const normalizedRow = Object.keys(row).reduce((acc, key) => {
                     acc[key.toLowerCase()] = row[key];
                     return acc;
                 }, {});
 
                 try {
-                    await axios.post("http://127.0.0.1:7082/products/products/create", {
+                    // Headers are handled automatically by the api.interceptors
+                    await api.post("/products/products/create", {
                         ...normalizedRow,
                         price: parseFloat(normalizedRow.price) || 0,
-                        stockQuantity: parseInt(normalizedRow.stockquantity || normalizedRow.stockQuantity) || 0,
+                        stockQuantity: parseInt(normalizedRow.stockquantity || normalizedRow.stockquantity) || 0,
                         categoryId: parseInt(normalizedRow.categoryid) || 3 
-                    }, {
-                        headers: { Authorization: `Bearer ${token}` }
                     });
                     successCount++;
                 } catch (err) {
@@ -97,12 +101,12 @@ const AddProduct = () => {
     };
 
     /**
-     * Submits a single product entry manually.
+     * Submits a single product registration manually.
+     * Synchronizes form data with the Product and Inventory microservices.
      */
     const handleManualSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        const token = localStorage.getItem("token");
 
         const payload = {
             ...formData,
@@ -112,12 +116,8 @@ const AddProduct = () => {
         };
 
         try {
-            await axios.post("http://127.0.0.1:7082/products/products/create", payload, {
-                headers: { 
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json" 
-                }
-            });
+            // Authentication and Content-Type are handled by the centralized api instance
+            await api.post("/products/products/create", payload);
             alert("Product created successfully.");
             setFormData({ name: "", price: "", stockQuantity: "", categoryId: 3, categoryName: "RC Hobbies", description: "", imageUrl: "", skuCode: "" });
         } catch (err) {
@@ -128,12 +128,8 @@ const AddProduct = () => {
         }
     };
 
-    /**
-     * Updates local state and synchronizes Category ID based on selection.
-     */
     const handleChange = (e) => {
         const { name, value } = e.target;
-
         if (name === "categoryName") {
             const selected = categoryMap.find(cat => cat.name === value);
             setFormData({
@@ -146,22 +142,20 @@ const AddProduct = () => {
         }
     };
 
+    const inputStyle = "w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500 transition-all";
+
     return (
         <div className="space-y-8 p-6">
-            {/* Interface Toggle: Manual vs Bulk */}
             <div className="flex justify-between items-center bg-[#161b2c] p-4 rounded-3xl border border-white/5 shadow-2xl">
                 <div className="flex gap-2">
                     <button onClick={() => setView("manual")} className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${view === 'manual' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>MANUAL ENTRY</button>
                     <button onClick={() => setView("bulk")} className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all ${view === 'bulk' ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>BULK IMPORT</button>
                 </div>
                 {view === "bulk" && (
-                    <button onClick={downloadTemplate} className="text-[10px] font-black text-cyan-500 hover:text-cyan-400 flex items-center gap-2 px-4 transition-all">
-                        DOWNLOAD TEMPLATE
-                    </button>
+                    <button onClick={downloadTemplate} className="text-[10px] font-black text-cyan-500 hover:text-cyan-400 flex items-center gap-2 px-4 transition-all">DOWNLOAD TEMPLATE</button>
                 )}
             </div>
 
-            {/* Upload Progress Indicator */}
             {loading && view === "bulk" && (
                 <div className="bg-[#161b2c] border border-emerald-500/20 p-6 rounded-3xl animate-in slide-in-from-top-4">
                     <div className="flex justify-between text-[10px] font-black mb-3 text-emerald-500 uppercase">
@@ -174,42 +168,33 @@ const AddProduct = () => {
                 </div>
             )}
 
-            {/* Form Views */}
             {view === "manual" ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
                     <div className="lg:col-span-2 bg-[#161b2c] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl">
                         <form onSubmit={handleManualSubmit} className="space-y-6">
                             <div className="grid grid-cols-2 gap-6">
-                                <input name="name" value={formData.name} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500 transition-all" placeholder="Product Name" required />
-                                <input name="skuCode" value={formData.skuCode} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white font-mono focus:border-blue-500 outline-none uppercase" placeholder="SKU Code" required />
+                                <input name="name" value={formData.name} onChange={handleChange} className={inputStyle} placeholder="Product Name" required />
+                                <input name="skuCode" value={formData.skuCode} onChange={handleChange} className={`${inputStyle} font-mono uppercase`} placeholder="SKU Code" required />
                             </div>
                             <div className="grid grid-cols-2 gap-6">
-                                <input name="price" type="number" step="0.01" value={formData.price} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white focus:border-blue-500 outline-none" placeholder="Price ($)" required />
-                                <input name="stockQuantity" type="number" value={formData.stockQuantity} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white focus:border-emerald-500 outline-none" placeholder="Initial Stock" required />
+                                <input name="price" type="number" step="0.01" value={formData.price} onChange={handleChange} className={inputStyle} placeholder="Price ($)" required />
+                                <input name="stockQuantity" type="number" value={formData.stockQuantity} onChange={handleChange} className={inputStyle} placeholder="Initial Stock" required />
                             </div>
                             <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-1">
-                                    <select 
-                                        name="categoryName" 
-                                        value={formData.categoryName} 
-                                        onChange={handleChange} 
-                                        className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white focus:border-blue-500 appearance-none"
-                                    >
-                                        {categoryMap.map(cat => (
-                                            <option key={`${cat.id}-${cat.name}`} value={cat.name}>{cat.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <input name="imageUrl" value={formData.imageUrl} onChange={handleChange} className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white focus:border-blue-500 outline-none" placeholder="Image URL" />
+                                <select name="categoryName" value={formData.categoryName} onChange={handleChange} className={`${inputStyle} appearance-none`}>
+                                    {categoryMap.map(cat => (
+                                        <option key={`${cat.id}-${cat.name}`} value={cat.name}>{cat.name}</option>
+                                    ))}
+                                </select>
+                                <input name="imageUrl" value={formData.imageUrl} onChange={handleChange} className={inputStyle} placeholder="Image URL" />
                             </div>
-                            <textarea name="description" value={formData.description} onChange={handleChange} rows="4" className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl text-white outline-none focus:border-blue-500 transition-all resize-none" placeholder="Product Description..."></textarea>
+                            <textarea name="description" value={formData.description} onChange={handleChange} rows="4" className={`${inputStyle} resize-none`} placeholder="Product Description..."></textarea>
                             <button type="submit" disabled={loading} className="w-full py-4 bg-blue-600 rounded-2xl font-black text-[10px] text-white tracking-widest hover:bg-blue-700 active:scale-[0.98] transition-all">
                                 {loading ? "PROCESSING..." : "REGISTER PRODUCT"}
                             </button>
                         </form>
                     </div>
 
-                    {/* Live Catalog Preview */}
                     <div className="lg:col-span-1">
                         <div className="bg-[#161b2c] p-4 rounded-[2.5rem] border border-white/5 shadow-2xl sticky top-8">
                             <div className="aspect-[4/3] bg-slate-800 rounded-3xl mb-4 overflow-hidden relative">
@@ -228,7 +213,6 @@ const AddProduct = () => {
                     </div>
                 </div>
             ) : (
-                /* Bulk Data Dropzone */
                 <div className="flex flex-col items-center justify-center py-24 bg-[#161b2c] border-2 border-dashed border-white/10 rounded-[3rem] animate-in zoom-in-95 duration-500">
                     <div className="text-center space-y-6">
                         <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto text-emerald-500 shadow-inner">
@@ -243,7 +227,6 @@ const AddProduct = () => {
                 </div>
             )}
 
-            {/* Transactional Summary Report */}
             {showSummary && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <div className="bg-[#161b2c] border border-white/10 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl text-center">

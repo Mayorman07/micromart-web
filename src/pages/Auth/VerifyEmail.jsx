@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../services/api"; 
 import Snowfall from "../../components/Snowfall";
 
 /**
  * VerifyEmail Component
  * Processes the email verification token sent via the user registration flow.
- * Hits the Spring Boot auth/verify endpoint.
+ * Interfaces with the Spring Boot authentication verification endpoint via the centralized service.
  */
 const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
@@ -14,15 +14,21 @@ const VerifyEmail = () => {
     const token = searchParams.get("token");
     const [status, setStatus] = useState("verifying");
     
-    // Prevents double-execution in React Strict Mode
+    /**
+     * Prevents double-execution of the verification request in React Strict Mode 
+     * by tracking the API call state.
+     */
     const hasCalledAPI = useRef(false);
 
     useEffect(() => {
         if (!token || hasCalledAPI.current) return;
         hasCalledAPI.current = true;
 
-        // Targets Spring Boot @GetMapping for account activation
-        axios.get(`http://127.0.0.1:7082/users/api/v1/auth/verify?token=${token}`)
+        /**
+         * Dispatches verification token to the backend.
+         * Utilizing the api instance ensures consistent baseURL application.
+         */
+        api.get(`/users/api/v1/auth/verify?token=${token}`)
             .then((response) => {
                 console.log("Account Verified Successfully:", response.data);
                 setTimeout(() => setStatus("success"), 500);
@@ -111,13 +117,6 @@ const VerifyEmail = () => {
                     </div>
                 )}
             </div>
-
-            <style>{`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-            `}</style>
         </div>
     );
 };

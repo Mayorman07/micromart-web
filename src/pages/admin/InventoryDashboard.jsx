@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../services/api"; 
 
 /**
  * InventoryDashboard Component
  * Provides a high-level overview of system assets with real-time search functionality.
+ * Interfaces with the Inventory microservice via the centralized security interceptor.
  */
 const InventoryDashboard = () => {
-    // --- State Management ---
     const [inventory, setInventory] = useState([]);
     const [filteredInventory, setFilteredInventory] = useState([]); 
     const [searchTerm, setSearchTerm] = useState(""); 
@@ -19,16 +19,17 @@ const InventoryDashboard = () => {
     const fetchInventory = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token"); 
-            const response = await axios.get("http://127.0.0.1:7082/inventory/api/inventory/all", {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            /** * The 'Authorization' header is now automatically handled by the 
+             * api.interceptors.request in api.js.
+             */
+            const response = await api.get("/inventory/api/inventory/all");
 
-            console.log(response);
+            // Extracting the content array from the Spring Data Page envelope
             const items = response.data.content || [];
-            console.log(items);
 
-            // Internal Mapping: Standardizing API response to UI model
+            /** * Internal Mapping: Standardizing API response to UI model.
+             * Specifically maps backend 'quantity' to 'stockQuantity' for UI progress bars.
+             */
             const standardizedItems = items.map((item, index) => ({
                 id: index, 
                 name: item.name,
@@ -61,10 +62,11 @@ const InventoryDashboard = () => {
         setFilteredInventory(results);
     }, [searchTerm, inventory]);
 
-    // Initial data synchronization on component mount
     useEffect(() => {
         fetchInventory();
     }, []);
+
+    const labelStyle = "p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest";
 
     return (
         <div className="p-6 space-y-6 animate-in fade-in duration-700">
@@ -77,7 +79,6 @@ const InventoryDashboard = () => {
                     </div>
                 </div>
 
-                {/* Search Interface */}
                 <div className="relative w-full md:w-96 group">
                     <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
                         <svg className="w-4 h-4 text-slate-500 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,11 +101,11 @@ const InventoryDashboard = () => {
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-white/5 border-b border-white/5">
                             <tr>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Product Details</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">SKU Identifier</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Classification</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Market Value</th>
-                                <th className="p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Current Stock</th>
+                                <th className={labelStyle}>Product Details</th>
+                                <th className={labelStyle}>SKU Identifier</th>
+                                <th className={labelStyle}>Classification</th>
+                                <th className={labelStyle}>Market Value</th>
+                                <th className={labelStyle}>Current Stock</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -124,7 +125,7 @@ const InventoryDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">{item.name}</p>
-                                                <p className="text-[9px] text-slate-500 font-mono tracking-tighter">REGISTRY_VERIFIED</p>
+                                                <p className="text-[9px] text-slate-500 font-mono tracking-tighter uppercase">Registry Verified</p>
                                             </div>
                                         </td>
                                         <td className="p-6">
@@ -144,7 +145,6 @@ const InventoryDashboard = () => {
                                                 <span className={`text-[10px] font-black px-3 py-1 rounded-lg uppercase w-fit ${item.stockQuantity > 10 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/10' : 'bg-red-500/10 text-red-500 border border-red-500/10'}`}>
                                                     {item.stockQuantity} UNITS
                                                 </span>
-                                                {/* Visual Stock Representation */}
                                                 <div className="w-24 bg-slate-800 h-1 rounded-full overflow-hidden">
                                                     <div 
                                                         className={`h-full transition-all duration-1000 ${item.stockQuantity > 10 ? 'bg-emerald-500' : 'bg-red-500'}`}

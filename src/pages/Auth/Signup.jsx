@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../../services/api"; 
 import { useNavigate } from "react-router-dom";
 import LiquidBackgroundDeep from "../../components/LiquidBackgroundDeep";
 import Snowfall from "../../components/Snowfall";
@@ -8,7 +8,7 @@ import { COUNTRIES } from "../../data/countries";
 /**
  * Signup Component
  * Facilitates new user registration with profile and address details.
- * Communicates with the Spring Boot /users/create endpoint.
+ * Communicates with the Spring Boot /users/create endpoint via the centralized API service.
  */
 const Signup = () => {
     const navigate = useNavigate();
@@ -52,8 +52,8 @@ const Signup = () => {
     };
 
     /**
-     * Submits the registration payload.
-     * On success, prompts the user to verify their email.
+     * Dispatches the registration payload to the backend.
+     * On success, prompts the user to verify their email as per the security flow.
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -61,12 +61,15 @@ const Signup = () => {
         setErrorMessage("");
 
         try {
-            // Targets the Spring Boot user creation endpoint
-            await axios.post("http://127.0.0.1:7082/users/users/create", formData);
+            /** * Utilizing the api instance ensures consistent baseURL and 
+             * global interceptor configurations are applied 
+             */
+            await api.post("/users/users/create", formData);
             setStatus("success");
         } catch (error) {
             console.error("Registration Error:", error);
             setStatus("error");
+            // Extracting standardized error message from the response
             setErrorMessage(error.response?.data?.message || "Registration failed. Please check your details.");
         }
     };
@@ -115,7 +118,6 @@ const Signup = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 text-left">
-                    
                     <div className="col-span-1 md:col-span-2 pb-2 border-b border-slate-100 mb-2">
                         <h3 className="text-[11px] font-black text-cyan-600 uppercase tracking-[0.2em]">Profile Information</h3>
                     </div>

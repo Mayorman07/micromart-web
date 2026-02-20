@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../services/api"; 
 import Snowfall from "../../components/Snowfall"; 
 
 /**
  * ResetPassword Component
- * Allows users to establish a new password using a verified token from their email.
- * Interfaces with Spring Boot password-reset/reset endpoint.
+ * Facilitates the establishment of new user credentials via a verified reset token.
+ * Interfaces with the Spring Boot password-reset/reset endpoint via the centralized service.
  */
 const ResetPassword = () => {
     const [searchParams] = useSearchParams();
@@ -18,7 +18,10 @@ const ResetPassword = () => {
     const [message, setMessage] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
-    // Complexity Validations (Aligns with standard backend DTO validation)
+    /**
+     * Password Complexity Validations
+     * Aligns with the standard backend DTO validation requirements.
+     */
     const validations = {
         hasLower: /[a-z]/.test(passwords.newPassword),
         hasUpper: /[A-Z]/.test(passwords.newPassword),
@@ -35,12 +38,12 @@ const ResetPassword = () => {
     };
 
     /**
-     * Submits the new password and token to the server.
+     * Dispatches the new credentials and verification token to the server.
+     * Validates complexity requirements client-side prior to network transmission.
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // Client-side guard for complexity
         const isComplex = Object.values(validations).every(v => v === true);
         if (!isComplex) {
             setMessage("Password must meet all complexity requirements.");
@@ -57,25 +60,28 @@ const ResetPassword = () => {
         setStatus("loading");
 
         try {
-            await axios.post("http://127.0.0.1:7082/users/password-reset/reset", {
+            /** * Utilizing the api instance ensures consistent baseURL and 
+             * global interceptor configurations are applied 
+             */
+            await api.post("/users/password-reset/reset", {
                 token: token,
                 newPassword: passwords.newPassword
             });
             setStatus("success");
         } catch (error) {
             setStatus("error");
+            // Extracting standardized error message from the response
             setMessage(error.response?.data?.message || "Reset link is invalid or has expired.");
         }
     };
 
-    // Success State View
     if (status === "success") {
         return (
             <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#00f2fe] to-[#4facfe] relative overflow-hidden font-sans">
                 <Snowfall />
                 <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-xl p-10 rounded-3xl shadow-2xl border border-white/50 text-center mx-4">
                     <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-100">
-                        <span className="text-2xl">✓</span>
+                        <span className="text-2xl" role="img" aria-label="success">✓</span>
                     </div>
                     <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Success!</h2>
                     <p className="text-slate-500 mb-8 font-medium">Your password has been updated. You can now sign in with your new credentials.</p>
@@ -99,8 +105,6 @@ const ResetPassword = () => {
                 <p className="text-slate-500 mb-8 text-sm font-medium">Please enter and confirm your new password.</p>
                 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
-                    
-                    {/* New Password Input */}
                     <div className="relative">
                         <label className="block mb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Password</label>
                         <input 
@@ -114,13 +118,12 @@ const ResetPassword = () => {
                          <button 
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-10 text-slate-400 hover:text-blue-600 transition-colors"
+                            className="absolute right-4 top-10 text-slate-400 hover:text-blue-600 transition-colors text-[10px] font-bold uppercase tracking-widest"
                         >
                             {showPassword ? "Hide" : "Show"}
                         </button>
                     </div>
 
-                    {/* Complexity Checklist */}
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 px-1 mb-2">
                         <ValidationItem isValid={validations.hasLower} text="Lowercase" />
                         <ValidationItem isValid={validations.hasUpper} text="Uppercase" />
@@ -128,7 +131,6 @@ const ResetPassword = () => {
                         <ValidationItem isValid={validations.hasLength} text="8+ Characters" />
                     </div>
 
-                    {/* Confirm Password Input */}
                     <div>
                         <label className="block mb-2 text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirm Password</label>
                         <input 

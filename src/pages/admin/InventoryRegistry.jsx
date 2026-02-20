@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import api from "../../services/api"; 
+import Snowfall from "../../components/Snowfall";
 
 /**
  * InventoryRegistry Component
  * Manages the display and stock adjustment of product SKUs.
+ * Interfaces with the Inventory microservice via the centralized security interceptor.
  */
 const InventoryRegistry = () => {
     const [products, setProducts] = useState([]);
@@ -17,14 +19,13 @@ const InventoryRegistry = () => {
 
     /**
      * Fetches paginated inventory data from the API.
+     * The 'Authorization' header and baseURL are handled by the api instance.
      */
     const fetchProducts = useCallback(async (page = 0, query = "") => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`http://127.0.0.1:7082/inventory/api/inventory/all`, {
-                params: { page, size: pagination.pageSize, keyword: query },
-                headers: { Authorization: `Bearer ${token}` }
+            const response = await api.get(`/inventory/api/inventory/all`, {
+                params: { page, size: pagination.pageSize, keyword: query }
             });
 
             const { content, totalPages, number } = response.data;
@@ -43,7 +44,7 @@ const InventoryRegistry = () => {
 
     /**
      * Handles stock level adjustments for a specific SKU.
-     * Triggers a PUT request to update the backend inventory state.
+     * Triggers a PUT request to update the backend inventory state using additive logic.
      */
     const handleAdjustStock = async (skuCode, currentQuantity) => {
         const input = prompt(`Current stock for SKU ${skuCode} is ${currentQuantity}. Enter units to add:`, "0");
@@ -52,12 +53,10 @@ const InventoryRegistry = () => {
         if (!input || isNaN(amountToAdd) || amountToAdd === 0) return;
 
         try {
-            const token = localStorage.getItem("token");
-            await axios.put(`http://127.0.0.1:7082/inventory/api/inventory/add`, {
+            // Securely dispatches the update to the Inventory service
+            await api.put(`/inventory/api/inventory/add`, {
                 skuCode: skuCode, 
                 quantity: amountToAdd
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
             
             // Refresh current view to reflect updated stock levels
@@ -68,7 +67,6 @@ const InventoryRegistry = () => {
         }
     };
 
-    // Debounced search effect to prevent excessive API calls
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchProducts(0, searchTerm);
@@ -76,9 +74,10 @@ const InventoryRegistry = () => {
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm, fetchProducts]);
 
+    const headerLabelStyle = "p-6 text-[10px] font-black text-slate-500 uppercase tracking-widest";
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-8 pb-20">
-            {/* Header and Search Interface */}
             <div className="flex justify-between items-end px-4">
                 <div>
                     <h1 className="text-3xl font-black text-white tracking-tighter uppercase">Inventory Management</h1>
@@ -95,17 +94,16 @@ const InventoryRegistry = () => {
                 </div>
             </div>
 
-            {/* Data Table */}
             <div className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-white/5 border-b border-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                <th className="p-6">Product Information</th>
-                                <th className="p-6 text-center">SKU</th>
-                                <th className="p-6 text-center">Unit Price</th>
-                                <th className="p-6 text-center">In-Stock</th>
-                                <th className="p-6 text-right">Actions</th>
+                            <tr className="bg-white/5 border-b border-white/5">
+                                <th className={headerLabelStyle}>Product Information</th>
+                                <th className={`${headerLabelStyle} text-center`}>SKU</th>
+                                <th className={`${headerLabelStyle} text-center`}>Unit Price</th>
+                                <th className={`${headerLabelStyle} text-center`}>In-Stock</th>
+                                <th className={`${headerLabelStyle} text-right`}>Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">

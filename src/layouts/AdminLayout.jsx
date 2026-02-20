@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api"; // Utilizing centralized API instance for automated auth management
 
 /**
  * AdminLayout Component
  * Provides the persistent Sidebar and Shell for all administrative routes.
- * Handles JWT verification and admin profile synchronization.
+ * Handles JWT synchronization and session termination logic.
  */
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -13,28 +13,36 @@ const AdminLayout = () => {
   const [adminProfile, setAdminProfile] = useState(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
 
-  // Sync admin identity with Spring Boot backend
+  /**
+   * Syncs administrative identity with the Spring Boot backend.
+   * Leverages the centralized api instance to handle token attachment and refresh logic.
+   */
   useEffect(() => {
     const fetchAdminData = async () => {
       const token = localStorage.getItem("token");
+      
+      // Initial route guard for unauthenticated access
       if (!token) {
         navigate("/admin/login");
         return;
       }
 
       try {
-        // Targets specific administrative profile endpoint
+        /** * The 'Authorization' header is now automatically handled by the 
+         * api.interceptors.request in api.js.
+         */
         const adminEmail = "mayowa.hyde@gmail.com"; 
-        const response = await axios.get(`http://127.0.0.1:7082/users/users/view/${adminEmail}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get(`/users/users/view/${adminEmail}`);
         
         if (response.data && response.data.firstName) {
             setAdminProfile(response.data);
         }
       } catch (e) {
         console.error("Administrative Sync Interrupted:", e);
-        if (e.response?.status === 403) handleLogout();
+        // Catch unauthorized access or expired refresh tokens
+        if (e.response?.status === 403 || e.response?.status === 401) {
+          handleLogout();
+        }
       } finally {
         setIsProfileLoading(false);
       }
@@ -43,13 +51,18 @@ const AdminLayout = () => {
     fetchAdminData();
   }, [navigate]);
 
+  /**
+   * Terminated Session Logic
+   * Flushes all security tokens from local storage to prevent session hijacking.
+   */
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken"); // Critical: Flush refresh token to prevent silent re-auth
     localStorage.removeItem("userId");
     navigate("/admin/login");
   };
 
-  // Sidebar Navigation Config
+  // Sidebar Navigation Configuration
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" },
     { name: "Inventory", path: "/admin/inventory", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
@@ -112,7 +125,7 @@ const AdminLayout = () => {
 
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-950/10 border border-red-900/20 text-red-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all duration-300 group"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-950/10 border border-red-900/20 text-red-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-50 hover:text-white transition-all duration-300 group"
             >
               <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -125,7 +138,6 @@ const AdminLayout = () => {
 
       {/* VIEWPORT CONTENT */}
       <main className="flex-1 ml-72 p-10 relative min-h-screen">
-        {/* Atmospheric Blue Glow */}
         <div className="absolute top-0 left-0 w-full h-[600px] bg-cyan-900/5 blur-[150px] pointer-events-none" />
         <div className="relative z-10 max-w-7xl mx-auto">
           <Outlet />

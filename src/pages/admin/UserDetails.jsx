@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../services/api"; // Utilizing centralized API instance for automated auth management
 
 /**
  * UserDetails Component
  * Provides a granular view of a user's profile, roles, and system authorities.
+ * Interfaces with the Spring Boot user service via the centralized security interceptor.
  */
 const UserDetails = () => {
     const { email } = useParams();
@@ -21,23 +22,20 @@ const UserDetails = () => {
 
     /**
      * Retrieves user profile data using the email parameter.
-     * Expects a valid JWT in localStorage for Authorization.
+     * The Bearer token is automatically attached by the api interceptor.
      */
     const fetchUserData = async () => {
         setLoading(true);
         try {
-            const token = localStorage.getItem("token"); 
-
-            // Targets Spring Boot @GetMapping(path ="/view/{email}")
-            const response = await axios.get(`http://127.0.0.1:7082/users/users/view/${email}`, {
-                headers: {
-                    Authorization: `Bearer ${token}` 
-                }
-            });
+            /** * Targets Spring Boot @GetMapping(path ="/view/{email}")
+             * Base URL and security handshake are handled globally.
+             */
+            const response = await api.get(`/users/users/view/${email}`);
             setUser(response.data);
             setError(null);
         } catch (err) {
             console.error("Profile Fetch Failed:", err);
+            // Handling standardized error status codes from the backend
             if (err.response?.status === 403) {
                 setError("ACCESS_DENIED: Insufficient administrative privileges.");
             } else {
@@ -50,20 +48,18 @@ const UserDetails = () => {
 
     /**
      * Updates the user role to MANAGER.
-     * Hits Spring Boot @PutMapping("/{userId}/roles/manager")
+     * Hits Spring Boot @PutMapping("/{userId}/roles/manager") using secure API instance.
      */
     const promoteToManager = async () => {
         setIsUpdating(true);
         try {
-            const token = localStorage.getItem("token");
-            await axios.put(`http://127.0.0.1:7082/users/users/${email}/roles/manager`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            // Interceptor handles JWT rotation if session expires during promotion
+            await api.put(`/users/users/${email}/roles/manager`, {});
             alert("User successfully promoted to Manager.");
-            fetchUserData(); // Refresh local state
+            fetchUserData(); // Refresh local state to reflect new Matrix access
         } catch (error) {
             console.error("Promotion Error:", error);
-            alert("Promotion failed. Verify administrative permissions.");
+            alert(error.response?.data?.message || "Promotion failed. Verify administrative permissions.");
         } finally {
             setIsUpdating(false);
         }
@@ -82,7 +78,7 @@ const UserDetails = () => {
             <p className="text-red-400/70 font-mono text-xs mb-6">{error}</p>
             <button 
                 onClick={() => navigate("/admin/dashboard")}
-                className="px-6 py-2 bg-red-500 text-white text-xs font-bold rounded-xl hover:bg-red-400 transition-all"
+                className="px-6 py-2 bg-red-500 text-white text-xs font-bold rounded-xl hover:bg-red-400 transition-all uppercase"
             >
                 Return to Dashboard
             </button>
@@ -92,7 +88,6 @@ const UserDetails = () => {
     return (
         <div className="animate-in fade-in duration-500 space-y-8 pb-20">
             
-            {/* Breadcrumb Navigation */}
             <div className="flex items-center justify-between border-b border-white/5 pb-6">
                 <div className="flex items-center gap-4 text-slate-500 text-sm">
                     <button onClick={() => navigate("/admin/dashboard")} className="hover:text-white transition-colors font-medium text-[11px] uppercase tracking-wider">Dashboard</button>
@@ -103,7 +98,6 @@ const UserDetails = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                 
-                {/* Profile Identity Sidebar */}
                 <div className="md:col-span-4 space-y-6">
                     <div className="bg-[#161b2c] border border-white/5 rounded-[3rem] p-10 text-center relative overflow-hidden shadow-2xl">
                         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-cyan-500/10 to-transparent"></div>
@@ -121,13 +115,11 @@ const UserDetails = () => {
                     </div>
                 </div>
 
-                {/* Access Control & Permissions */}
                 <div className="md:col-span-8 space-y-8">
                     <div className="bg-slate-900/50 border border-white/5 rounded-[3rem] p-10 shadow-xl">
                         <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-10">Access Control Matrix</h3>
                         
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                            {/* Roles Section */}
                             <div>
                                 <h4 className="text-white text-sm font-bold mb-6">Security Roles</h4>
                                 <div className="flex flex-wrap gap-2 mb-8">
@@ -146,7 +138,6 @@ const UserDetails = () => {
                                 </button>
                             </div>
                             
-                            {/* Authorities Section */}
                             <div>
                                 <h4 className="text-white text-sm font-bold mb-6">Permissions</h4>
                                 <div className="grid grid-cols-1 gap-3">

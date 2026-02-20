@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../services/api"; // Centralized API instance replaces standard axios
 
 /**
  * ProfileSettings Component
  * Manages administrative user details and account security preferences.
+ * Interfaces with the Spring Boot user service via the centralized security interceptor.
  */
 const ProfileSettings = () => {
     const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "" });
@@ -12,16 +13,15 @@ const ProfileSettings = () => {
     useEffect(() => {
         /**
          * Fetches current administrator profile data on component mount.
+         * Authorization headers are handled automatically by the api instance.
          */
         const fetchProfile = async () => {
             try {
-                const token = localStorage.getItem("token");
-                const response = await axios.get(`http://127.0.0.1:7082/users/users/view/mayowa.hyde@gmail.com`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const adminEmail = "mayowa.hyde@gmail.com"; 
+                const response = await api.get(`/users/users/view/${adminEmail}`);
                 setFormData(response.data);
             } catch (error) {
-                console.error("Profile Fetch Error:", error);
+                console.error("Profile Fetch Error: Access to administrative dossier interrupted.", error);
             }
         };
         fetchProfile();
@@ -29,49 +29,51 @@ const ProfileSettings = () => {
 
     /**
      * Handles the update request for user profile information.
-     * Persists changes to the backend via PutMapping.
+     * Persists changes to the backend via PutMapping(path ="/update").
      */
     const handleUpdate = async (e) => {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const token = localStorage.getItem("token");
-            // Targets Spring Boot @PutMapping(path ="/update")
-            await axios.put(`http://127.0.0.1:7082/users/users/update`, formData, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            /** * Targets the Spring Boot users/update endpoint.
+             * The interceptor manages JWT rotation if the session expires during submission.
+             */
+            await api.put(`/users/users/update`, formData);
             alert("Profile updated successfully.");
         } catch (err) {
             console.error("Update Error:", err);
-            alert("Failed to update profile. Please check your connection.");
+            // Standardizing error extraction from the backend response
+            alert(err.response?.data?.message || "Failed to update profile. Please check your connection.");
         } finally { 
             setIsSaving(false); 
         }
     };
+
+    const inputStyle = "w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white focus:border-cyan-500 outline-none transition-all";
+    const labelStyle = "text-[10px] font-bold text-slate-500 uppercase tracking-widest";
 
     return (
         <div className="animate-in fade-in duration-500 space-y-8">
             <h1 className="text-3xl font-black text-white tracking-tight uppercase">Account Settings</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                
                 {/* User Information Form */}
                 <div className="md:col-span-2 bg-[#161b2c] border border-white/5 rounded-[2.5rem] p-10 shadow-2xl">
                     <form onSubmit={handleUpdate} className="space-y-6">
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">First Name</label>
+                                <label className={labelStyle}>First Name</label>
                                 <input 
-                                    className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white focus:border-cyan-500 outline-none transition-all"
+                                    className={inputStyle}
                                     value={formData.firstName}
                                     onChange={(e) => setFormData({...formData, firstName: e.target.value})}
                                     required
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Last Name</label>
+                                <label className={labelStyle}>Last Name</label>
                                 <input 
-                                    className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white focus:border-cyan-500 outline-none transition-all"
+                                    className={inputStyle}
                                     value={formData.lastName}
                                     onChange={(e) => setFormData({...formData, lastName: e.target.value})}
                                     required
@@ -79,7 +81,7 @@ const ProfileSettings = () => {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email Address</label>
+                            <label className={labelStyle}>Email Address</label>
                             <input 
                                 disabled
                                 className="w-full bg-black/20 border border-white/5 rounded-2xl p-4 text-slate-500 cursor-not-allowed font-mono text-sm"
@@ -101,7 +103,7 @@ const ProfileSettings = () => {
                     <div>
                         <h3 className="text-white font-bold mb-4">Security Profile</h3>
                         <p className="text-slate-500 text-xs leading-relaxed">
-                            Your account is secured with JWT-based session persistence and encrypted password hashing.
+                            Your account is secured with JWT-based session persistence and automated token rotation.
                         </p>
                     </div>
                     <div className="pt-6 border-t border-white/5 mt-6">
