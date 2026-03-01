@@ -3,7 +3,7 @@ import { useToast } from "../contexts/ToastContext";
 import { Sun, Moon, Search, ShoppingBag, Heart, LogOut, User } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 
-const UserNavbar = ({ cartItemCount = 0 }) => {
+const UserNavbar = ({ cartItemCount = 0, onOpenCart }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { showToast } = useToast();
@@ -26,7 +26,7 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
             dark:bg-[#0a0f1d]/90 dark:backdrop-blur-xl dark:border-white/5 
             bg-white/95 backdrop-blur-md border-b border-gray-100 text-gray-800 dark:text-white">
             
-            {/* 1. Dynamic Announcement Bar - Swapped to Aqua in Light Mode */}
+            {/* 1. Dynamic Announcement Bar */}
             <div className={`py-2 text-center text-[10px] font-bold tracking-[0.2em] uppercase transition-colors duration-500
                 ${isDark ? 'bg-cyan-900/40 text-cyan-400' : 'bg-cyan-50 text-cyan-700 border-b border-cyan-100'}`}>
                 {isDark ? "SYSTEM_STATUS: ALL MODULES OPERATIONAL // 15% OFF" : "AUTHENTICITY GUARANTEED: EXPLORE OUR SOURCE CODE & HARDWARE ORIGINS"}
@@ -35,6 +35,7 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
             <div className="max-w-7xl mx-auto px-8 py-5">
                 <div className="flex justify-between items-center">
                     
+                    {/* SEARCH */}
                     <div className="hidden md:flex w-1/3 items-center border-b border-gray-200 dark:border-white/10 pb-1 max-w-[180px] group">
                         <Search size={14} className="text-gray-400 mr-2 group-focus-within:text-cyan-500 transition-colors" />
                         <input 
@@ -44,6 +45,7 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
                         />
                     </div>
 
+                    {/* LOGO */}
                     <Link to="/marketplace" className="flex flex-col items-center group">
                         <span className={`text-3xl tracking-tighter transition-all duration-700
                             ${isDark ? 'font-black uppercase text-white group-hover:text-cyan-400' : 'font-serif italic lowercase text-gray-900'}`}>
@@ -51,6 +53,7 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
                         </span>
                     </Link>
 
+                    {/* UTILITIES */}
                     <div className="flex w-1/3 justify-end items-center gap-6">
                         <button 
                             onClick={toggleTheme}
@@ -73,7 +76,11 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
 
                         <Heart size={18} className="cursor-pointer hover:text-red-400 transition-colors hidden xs:block" />
 
-                        <div className="relative cursor-pointer hover:scale-105 transition-transform" onClick={() => navigate("/cart")}>
+                        {/* SHOPPING BAG - Updated onClick to use onOpenCart drawer trigger */}
+                        <div 
+                            className="relative cursor-pointer hover:scale-110 transition-transform active:scale-95" 
+                            onClick={onOpenCart}
+                        >
                             <ShoppingBag size={20} />
                             {cartItemCount >= 0 && (
                                 <span className={`absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-colors duration-500
@@ -89,6 +96,7 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
                     </div>
                 </div>
 
+                {/* SUB NAV */}
                 <div className="flex justify-center gap-10 mt-5 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] border-t border-gray-100 dark:border-white/5">
                     <Link to="/marketplace" className={activeClass("/marketplace")}>Marketplace</Link>
                     <Link to="/orders" className={activeClass("/orders")}>My Orders</Link>
