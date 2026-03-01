@@ -21,9 +21,8 @@ api.interceptors.response.use(
         const originalRequest = error.config;
 
         const isAuthError = error.response?.status === 401 || error.response?.status === 403;
-        const isExpiredError = error.response?.status === 500 && error.response?.data?.message?.includes("expired");
 
-        if ((isAuthError || isExpiredError) && !originalRequest._retry) {
+        if (isAuthError && !originalRequest._retry) {
             originalRequest._retry = true;
 
             try {
@@ -31,6 +30,8 @@ api.interceptors.response.use(
                 
                 if (!refreshToken) throw new Error("No refresh token found");
                 
+                console.log(" 401 Unauthorized: Attempting silent hardware re-authorization...");
+
                 const rs = await axios.post("http://127.0.0.1:7082/users/users/refresh-token", {
                     refreshToken: refreshToken
                 });
@@ -39,13 +40,17 @@ api.interceptors.response.use(
 
                 if (token) {
                     localStorage.setItem("token", token);
-                    if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+                    if (newRefreshToken) {
+                        localStorage.setItem("refreshToken", newRefreshToken);
+                    }
+
+                    console.log(" Re-authorization successful. Retrying original request...");
 
                     originalRequest.headers.Authorization = `Bearer ${token}`;
                     return api(originalRequest);
                 }
             } catch (refreshError) {
-                console.error("Session expired. Clearning registry local data...");
+                console.error(" Session fully expired. Purging local registry data.");
                 localStorage.clear();
                 window.location.href = "/login";
                 return Promise.reject(refreshError);
