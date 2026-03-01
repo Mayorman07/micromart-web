@@ -1,14 +1,18 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class', 
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ['"Playfair Display"', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
       animation: {
         snowfall: 'snowfall 10s linear infinite',
-        // New Liquid Animations
         blob: "blob 7s infinite",
       },
       keyframes: {
@@ -17,7 +21,6 @@ export default {
           '10%': { opacity: '1' },
           '100%': { transform: 'translateY(110vh) translateX(50px)', opacity: '0.2' },
         },
-        // The "Liquid" Movement
         blob: {
           "0%": { transform: "translate(0px, 0px) scale(1)" },
           "33%": { transform: "translate(30px, -50px) scale(1.1)" },

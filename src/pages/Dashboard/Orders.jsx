@@ -1,22 +1,38 @@
-/**
- * Orders Component
- * Displays the purchase history for the authenticated user.
- */
+import { useNavigate } from "react-router-dom";
+import { ShoppingBag } from "lucide-react";
+import { useTheme } from "../../contexts/ThemeContext";
+
 const Orders = () => {
+    const { isDark } = useTheme();
+    const navigate = useNavigate();
+
     return (
-        <div className="min-h-[60vh] flex flex-col items-center justify-center p-8">
-            <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mb-6 border border-white/10">
-                <svg className="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
+        <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+            {/* 1. Icon Container */}
+            <div className={`mb-8 p-8 rounded-full transition-all duration-500 
+                ${isDark ? 'bg-white/5 text-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]' : 'bg-gray-100 text-gray-400'}`}>
+                <ShoppingBag size={64} strokeWidth={1.5} />
             </div>
-            <h1 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">Order History</h1>
-            <p className="text-slate-500 font-medium text-center max-w-sm">
-                You haven't placed any orders yet. Once you make a purchase from the marketplace, it will appear here.
+
+            {/* 2. Main Heading - The "Invisible" Text Fix */}
+            <h2 className={`text-4xl font-black uppercase tracking-tighter mb-4 transition-colors duration-500
+                ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Order History
+            </h2>
+
+            {/* 3. Subtext - Professional Hardware Registry Tone */}
+            <p className={`max-w-md text-sm font-medium tracking-wide mb-10 transition-colors duration-500
+                ${isDark ? 'text-slate-400' : 'text-gray-500 font-normal italic'}`}>
+                Hardware acquisition logs are currently empty. Initialize a transaction in the marketplace to register your first asset.
             </p>
+
+            {/* 4. Action Button */}
             <button 
-                onClick={() => window.location.href = '/marketplace'}
-                className="mt-8 px-8 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-cyan-500/20"
+                onClick={() => navigate("/marketplace")}
+                className={`px-12 py-4 rounded-full text-[11px] font-black uppercase tracking-[0.2em] transition-all active:scale-95
+                ${isDark 
+                    ? 'bg-white text-black hover:bg-cyan-500 shadow-lg shadow-cyan-500/20' 
+                    : 'bg-gray-900 text-white hover:bg-black shadow-xl shadow-gray-200'}`}
             >
                 Start Shopping
             </button>

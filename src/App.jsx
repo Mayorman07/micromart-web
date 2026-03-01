@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 // GLOBAL CONTEXTS
 import { ToastProvider } from "./contexts/ToastContext"; 
@@ -35,47 +36,45 @@ import ProfileSettings from "./pages/admin/ProfileSettings";
 function App() {
   return (
     <ToastProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* --- PUBLIC ACCESS ROUTES --- */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<UserDashboard />} />
-          <Route path="/newsletter" element={<ComingSoon title="MicroMart Newsletter" />} />
+      <ThemeProvider> {/* WRAPPED HERE */}
+        <BrowserRouter>
+          <Routes>
+            {/* --- PUBLIC ACCESS ROUTES --- */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<UserDashboard />} />
+            <Route path="/newsletter" element={<ComingSoon title="MicroMart Newsletter" />} />
 
-          {/* --- AUTHENTICATION FLOWS --- */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/verify" element={<VerifyEmail />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+            {/* --- AUTHENTICATION FLOWS --- */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/verify" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* --- PROTECTED USER ZONE --- */}
-          <Route element={<UserLayout />}>
-              <Route path="/marketplace" element={<ProductGallery />} />
-              <Route path="/orders" element={<Orders />} /> {/* ADDED: Protected Orders route */}
-          </Route>
+            {/* --- PROTECTED USER ZONE --- */}
+            <Route element={<UserLayout />}>
+                <Route path="/marketplace" element={<ProductGallery />} />
+                <Route path="/orders" element={<Orders />} />
+            </Route>
 
-          {/* --- ADMINISTRATIVE RESTRICTED ZONE --- */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+            {/* --- ADMINISTRATIVE RESTRICTED ZONE --- */}
+            <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Protected Admin Layout Shell */}
-          <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="products" element={<AddProduct />} />
-              <Route path="view/:email" element={<UserDetails />} />
-              <Route path="settings" element={<ProfileSettings />} />
-              <Route path="operatives" element={<UserList />} />
-              
-              {/* Inventory Management Cluster */}
-              <Route path="inventory" element={<InventoryDashboard />} />
-              <Route path="registry" element={<InventoryRegistry />} /> 
-          </Route>
+            <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="products" element={<AddProduct />} />
+                <Route path="view/:email" element={<UserDetails />} />
+                <Route path="settings" element={<ProfileSettings />} />
+                <Route path="operatives" element={<UserList />} />
+                <Route path="inventory" element={<InventoryDashboard />} />
+                <Route path="registry" element={<InventoryRegistry />} /> 
+            </Route>
 
-          {/* --- GLOBAL FALLBACK --- */}
-          <Route path="*" element={<ComingSoon title="404: Route Not Found" message="The requested module is either missing or under maintenance." />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="*" element={<ComingSoon title="404: Route Not Found" />} />
+          </Routes>
+        </BrowserRouter>
+      </ThemeProvider>
     </ToastProvider>
   );
 }
