@@ -26,16 +26,15 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
             dark:bg-[#0a0f1d]/90 dark:backdrop-blur-xl dark:border-white/5 
             bg-white/95 backdrop-blur-md border-b border-gray-100 text-gray-800 dark:text-white">
             
-            {/* 1. Dynamic Announcement Bar */}
+            {/* 1. Dynamic Announcement Bar - Swapped to Aqua in Light Mode */}
             <div className={`py-2 text-center text-[10px] font-bold tracking-[0.2em] uppercase transition-colors duration-500
-                ${isDark ? 'bg-cyan-900/40 text-cyan-400' : 'bg-[#d4d7b8] text-gray-700'}`}>
+                ${isDark ? 'bg-cyan-900/40 text-cyan-400' : 'bg-cyan-50 text-cyan-700 border-b border-cyan-100'}`}>
                 {isDark ? "SYSTEM_STATUS: ALL MODULES OPERATIONAL // 15% OFF" : "AUTHENTICITY GUARANTEED: EXPLORE OUR SOURCE CODE & HARDWARE ORIGINS"}
             </div>
 
             <div className="max-w-7xl mx-auto px-8 py-5">
                 <div className="flex justify-between items-center">
                     
-                    {/* LEFT: Search (Boutique Style) */}
                     <div className="hidden md:flex w-1/3 items-center border-b border-gray-200 dark:border-white/10 pb-1 max-w-[180px] group">
                         <Search size={14} className="text-gray-400 mr-2 group-focus-within:text-cyan-500 transition-colors" />
                         <input 
@@ -45,7 +44,6 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
                         />
                     </div>
 
-                    {/* CENTER: Logo (The Aesthetic Transformer) */}
                     <Link to="/marketplace" className="flex flex-col items-center group">
                         <span className={`text-3xl tracking-tighter transition-all duration-700
                             ${isDark ? 'font-black uppercase text-white group-hover:text-cyan-400' : 'font-serif italic lowercase text-gray-900'}`}>
@@ -53,9 +51,7 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
                         </span>
                     </Link>
 
-                    {/* RIGHT: Utilities & Toggle */}
                     <div className="flex w-1/3 justify-end items-center gap-6">
-                        {/* Theme Switcher */}
                         <button 
                             onClick={toggleTheme}
                             className="p-2 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all active:scale-90"
@@ -65,12 +61,11 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
 
                         <div className="h-6 w-[1px] bg-gray-200 dark:bg-white/10 hidden sm:block"></div>
 
-                        {/* Account Icon (Teeka Style) */}
                         <div className="flex items-center gap-2 cursor-pointer group hidden sm:flex">
                             <User size={18} className="group-hover:text-cyan-500 transition-colors" />
                             <div className="text-right">
                                 <p className="text-[10px] font-black uppercase tracking-tighter leading-none">{userEmail.split('@')[0]}</p>
-                                <p className={`text-[8px] font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-cyan-500' : 'text-gray-400'}`}>
+                                <p className={`text-[8px] font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-cyan-500' : 'text-cyan-600'}`}>
                                     {isDark ? "PREMIUM_USER" : "MEMBER"}
                                 </p>
                             </div>
@@ -78,12 +73,11 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
 
                         <Heart size={18} className="cursor-pointer hover:text-red-400 transition-colors hidden xs:block" />
 
-                        {/* Cart with dynamic badge style */}
                         <div className="relative cursor-pointer hover:scale-105 transition-transform" onClick={() => navigate("/cart")}>
                             <ShoppingBag size={20} />
                             {cartItemCount >= 0 && (
-                                <span className={`absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm
-                                    ${isDark ? 'bg-cyan-500 text-white shadow-cyan-500/40' : 'bg-[#4a5d4e] text-white'}`}>
+                                <span className={`absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-colors duration-500
+                                    ${isDark ? 'bg-cyan-500 text-white shadow-cyan-500/40' : 'bg-cyan-500 text-white shadow-md shadow-cyan-500/20'}`}>
                                     {cartItemCount}
                                 </span>
                             )}
@@ -95,7 +89,6 @@ const UserNavbar = ({ cartItemCount = 0 }) => {
                     </div>
                 </div>
 
-                {/* 3. Global Sub-Navigation */}
                 <div className="flex justify-center gap-10 mt-5 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] border-t border-gray-100 dark:border-white/5">
                     <Link to="/marketplace" className={activeClass("/marketplace")}>Marketplace</Link>
                     <Link to="/orders" className={activeClass("/orders")}>My Orders</Link>
