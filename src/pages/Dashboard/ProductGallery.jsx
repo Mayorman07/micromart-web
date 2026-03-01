@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom"; 
 import api from "../../services/api";
-import { useTheme } from "../contexts/ThemeContext";
-import { SearchX, Loader2 } from "lucide-react"; // Added Loader2
+import { useTheme } from "../../contexts/ThemeContext";
+import { SearchX, Loader2 } from "lucide-react"; 
 
 const ProductGallery = () => {
     const [products, setProducts] = useState([]);
