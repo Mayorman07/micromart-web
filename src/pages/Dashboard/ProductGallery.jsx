@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom"; 
 import api from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -6,6 +7,8 @@ const ProductGallery = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const { isDark } = useTheme();
+    
+    const { setIsCartOpen, setCartItems } = useOutletContext();
 
     const fetchDisplayProducts = async () => {
         setLoading(true);
@@ -22,6 +25,22 @@ const ProductGallery = () => {
     useEffect(() => {
         fetchDisplayProducts();
     }, []);
+
+    const handleAddToCart = (product) => {
+        setCartItems(prev => {
+            const exists = prev.find(item => item.skuCode === product.skuCode);
+            if (exists) {
+                return prev.map(item => 
+                    item.skuCode === product.skuCode 
+                    ? { ...item, quantity: item.quantity + 1 } 
+                    : item
+                );
+            }
+            return [...prev, { ...product, quantity: 1 }];
+        });
+
+        setIsCartOpen(true);
+    };
 
     if (loading) return (
         <div className={`min-h-screen flex items-center justify-center transition-colors duration-500 ${isDark ? 'bg-[#0a0f1d]' : 'bg-[#fafafa]'}`}>
@@ -56,7 +75,6 @@ const ProductGallery = () => {
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                 alt={product.name}
                             />
-                            {/* Dynamic Price Badge - Swapped Olive for Aqua/Gray in Light Mode */}
                             <div className={`absolute top-4 right-4 px-4 py-2 rounded-xl transition-all duration-500
                                 ${isDark ? 'bg-black/60 backdrop-blur-md border border-white/10 text-cyan-400' : 'bg-cyan-50/90 text-cyan-700 border border-cyan-100 shadow-sm'}`}>
                                 <span className="font-black text-sm">${product.price}</span>
@@ -74,12 +92,14 @@ const ProductGallery = () => {
                                 {product.name}
                             </h3>
                             
-                            {/* Dynamic Button - Clean Aqua/Cyan Button for Light Mode */}
-                            <button className={`w-full py-4 rounded-xl transition-all uppercase text-[10px] font-black tracking-widest
+                            {/* UPDATED BUTTON: Now calls handleAddToCart */}
+                            <button 
+                                onClick={() => handleAddToCart(product)}
+                                className={`w-full py-4 rounded-xl transition-all uppercase text-[10px] font-black tracking-widest active:scale-95
                                 ${isDark 
                                     ? 'bg-white text-black hover:bg-cyan-500 hover:text-white shadow-lg' 
-                                    : 'bg-cyan-500 text-white hover:bg-cyan-600 shadow-lg shadow-cyan-500/20 active:scale-95'}`}>
-                                View Product
+                                    : 'bg-cyan-500 text-white hover:bg-cyan-600 shadow-lg shadow-cyan-500/20'}`}>
+                                Add to Registry
                             </button>
                         </div>
                     </div>
