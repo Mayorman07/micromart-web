@@ -1,9 +1,9 @@
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useToast } from "../contexts/ToastContext";
-import { Sun, Moon, Search, ShoppingBag, Heart, LogOut, User } from "lucide-react";
+import { Sun, Moon, Search, ShoppingBag, Heart, LogOut, User, X } from "lucide-react"; // Added X icon
 import { useTheme } from "../contexts/ThemeContext";
 
-const UserNavbar = ({ cartItemCount = 0, onOpenCart }) => {
+const UserNavbar = ({ cartItemCount = 0, onOpenCart, searchTerm, setSearchTerm }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { showToast } = useToast();
@@ -29,20 +29,33 @@ const UserNavbar = ({ cartItemCount = 0, onOpenCart }) => {
             {/* 1. Dynamic Announcement Bar */}
             <div className={`py-2 text-center text-[10px] font-bold tracking-[0.2em] uppercase transition-colors duration-500
                 ${isDark ? 'bg-cyan-900/40 text-cyan-400' : 'bg-cyan-50 text-cyan-700 border-b border-cyan-100'}`}>
-                {isDark ? "SYSTEM_STATUS: ALL MODULES OPERATIONAL // 15% OFF" : "AUTHENTICITY GUARANTEED: EXPLORE OUR SOURCE CODE & HARDWARE ORIGINS"}
+                {isDark 
+                    ? "// NEURAL LINK ESTABLISHED :: ENCRYPTED TRANSACTION PROTOCOLS ACTIVE" 
+                    : "AUTHENTICITY GUARANTEED: EXPLORE OUR SOURCE CODE & HARDWARE ORIGINS"}
             </div>
 
             <div className="max-w-7xl mx-auto px-8 py-5">
                 <div className="flex justify-between items-center">
                     
-                    {/* SEARCH */}
-                    <div className="hidden md:flex w-1/3 items-center border-b border-gray-200 dark:border-white/10 pb-1 max-w-[180px] group">
+                    {/* SEARCH - Wired to Global State */}
+                    <div className="hidden md:flex w-1/3 items-center border-b border-gray-200 dark:border-white/10 pb-1 max-w-[180px] group relative">
                         <Search size={14} className="text-gray-400 mr-2 group-focus-within:text-cyan-500 transition-colors" />
                         <input 
                             type="text" 
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="type to search.." 
-                            className="bg-transparent outline-none text-[11px] placeholder:italic w-full italic"
+                            className="bg-transparent outline-none text-[11px] placeholder:italic w-full italic focus:placeholder-transparent"
                         />
+                        {/* Clear Search Button */}
+                        {searchTerm && (
+                            <button 
+                                onClick={() => setSearchTerm("")}
+                                className="absolute right-0 hover:text-cyan-500 transition-colors"
+                            >
+                                <X size={12} strokeWidth={3} />
+                            </button>
+                        )}
                     </div>
 
                     {/* LOGO */}
@@ -76,7 +89,7 @@ const UserNavbar = ({ cartItemCount = 0, onOpenCart }) => {
 
                         <Heart size={18} className="cursor-pointer hover:text-red-400 transition-colors hidden xs:block" />
 
-                        {/* SHOPPING BAG - Updated onClick to use onOpenCart drawer trigger */}
+                        {/* SHOPPING BAG */}
                         <div 
                             className="relative cursor-pointer hover:scale-110 transition-transform active:scale-95" 
                             onClick={onOpenCart}

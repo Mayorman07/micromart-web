@@ -1,22 +1,21 @@
-import { useState } from "react"; // Added useState
+import { useState } from "react";
 import { Outlet, Navigate } from "react-router-dom";
 import UserNavbar from "../components/UserNavbar";
-import CartDrawer from "../components/CartDrawer"; // Import your new component
+import CartDrawer from "../components/CartDrawer";
 import { useTheme } from "../contexts/ThemeContext";
 
 const UserLayout = () => {
     const { isDark } = useTheme();
-    const [isCartOpen, setIsCartOpen] = useState(false); // State to control drawer
-    const isAuthenticated = !!localStorage.getItem("token");
-
-    // Mock data for now - we'll connect this to your Cart API next
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState(""); // 1. Global Search State
     const [cartItems, setCartItems] = useState([]);
+    
+    const isAuthenticated = !!localStorage.getItem("token");
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
 
-    // Handlers for Cart actions
     const handleUpdateQuantity = (skuCode, newQty) => {
         if (newQty < 1) return;
         setCartItems(prev => prev.map(item => 
@@ -31,7 +30,6 @@ const UserLayout = () => {
     return (
         <div className="min-h-screen transition-colors duration-500 bg-[#fafafa] dark:bg-[#0a0f1d]">
             
-            {/* 1. The Sidebar Drawer */}
             <CartDrawer 
                 isOpen={isCartOpen} 
                 onClose={() => setIsCartOpen(false)} 
@@ -40,15 +38,18 @@ const UserLayout = () => {
                 onRemoveItem={handleRemoveItem}
             />
 
-            {/* 2. The Navbar - Now with toggle function passed in */}
+            {/* 2. Pass searchTerm and setter to the Navbar */}
             <UserNavbar 
                 cartItemCount={cartItems.length} 
-                onOpenCart={() => setIsCartOpen(true)} 
+                onOpenCart={() => setIsCartOpen(true)}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm} 
             />
 
             <main className="pt-32 pb-20 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto">
-                    <Outlet context={{ setIsCartOpen, setCartItems }} /> 
+                    {/* 3. Pass searchTerm to the ProductGallery via Outlet Context */}
+                    <Outlet context={{ setIsCartOpen, setCartItems, searchTerm }} /> 
                 </div>
             </main>
 
