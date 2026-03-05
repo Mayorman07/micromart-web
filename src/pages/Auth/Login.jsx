@@ -26,7 +26,7 @@ const Login = () => {
 
     /**
      * Submits credentials to the backend.
-     * On success, stores both JWT and Refresh Token for session persistence.
+     * On success, stores JWT, Refresh Token, and user identification for session persistence.
      */
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -35,13 +35,16 @@ const Login = () => {
         try {
             const response = await api.post("/users/users/login", formData);
 
-            const { token, refreshToken, userId } = response.data;
+        
+            const { token, refreshToken, userId, email } = response.data;
             
             if (!token) throw new Error("Authentication failed: No token provided.");
 
             localStorage.setItem("token", token);
             localStorage.setItem("refreshToken", refreshToken); 
             localStorage.setItem("userId", userId);
+            
+            localStorage.setItem("userEmail", email || formData.email);
             
             setStatus("success");
             showToast("Welcome to MicroMart! Access granted.", "success");

@@ -13,10 +13,15 @@ const AccountOverview = () => {
 
     useEffect(() => {
         const fetchUserProfile = async () => {
-            if (!userEmail) return;
+            // FIX: Ensure loading turns off if email is missing in localStorage
+            if (!userEmail) {
+                console.error("No user email found in localStorage.");
+                setLoading(false);
+                return;
+            }
             
             try {
-                const response = await api.get(`/users/view/${userEmail}`);
+                const response = await api.get(`users/users/view/${userEmail}`);
                 setUserData(response.data);
             } catch (err) {
                 console.error("Failed to fetch user profile:", err);
@@ -39,7 +44,7 @@ const AccountOverview = () => {
     if (!userData) {
         return (
             <div className="text-center py-12 text-red-500 font-bold uppercase tracking-widest text-sm">
-                Failed to load profile data.
+                Failed to load profile data. Please check your connection or log in again.
             </div>
         );
     }
