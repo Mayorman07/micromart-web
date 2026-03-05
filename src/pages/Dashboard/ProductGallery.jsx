@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useOutletContext } from "react-router-dom"; 
+import { useOutletContext, useNavigate } from "react-router-dom"; // Added useNavigate
 import api from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useToast } from "../../contexts/ToastContext"; // Added useToast
 import { SearchX, Loader2 } from "lucide-react"; 
 
 const ProductGallery = () => {
@@ -9,8 +10,11 @@ const ProductGallery = () => {
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState(null); 
     const { isDark } = useTheme();
+    const navigate = useNavigate(); // For redirecting guests
+    const { showToast } = useToast(); // For alerting guests
     
-    const { setIsCartOpen, searchTerm, fetchCart } = useOutletContext();
+    //  Extract isAuthenticated from layout context
+    const { setIsCartOpen, searchTerm, fetchCart, isAuthenticated } = useOutletContext();
 
     const fetchDisplayProducts = async () => {
         setLoading(true);
@@ -34,6 +38,13 @@ const ProductGallery = () => {
     );
 
     const handleAddToCart = async (product) => {
+        // GUARD CLAUSE: Catch unauthenticated users immediately
+        if (!isAuthenticated) {
+            showToast("Please sign in to add items to your registry.", "info");
+            navigate("/login");
+            return;
+        }
+
         setProcessingId(product.skuCode); 
         try {
             await api.post("/cart/api/cart/items", {
@@ -43,8 +54,10 @@ const ProductGallery = () => {
 
             await fetchCart();
             setIsCartOpen(true);
+            showToast(`${product.name} added to registry`, "success"); // Optional positive feedback
         } catch (err) {
             console.error("Hardware acquisition failed:", err);
+            showToast("Failed to update registry. Please try again.", "error");
         } finally {
             setProcessingId(null); 
         }
