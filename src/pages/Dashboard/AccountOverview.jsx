@@ -1,11 +1,58 @@
+import { useState, useEffect } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
-import { Edit2, Wallet } from "lucide-react";
+import { Edit2, Wallet, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import api from "../../services/api";
 
 const AccountOverview = () => {
     const { isDark } = useTheme();
-    const userEmail = localStorage.getItem("userEmail") || "user@micromart.com";
-    const userName = userEmail.split('@')[0]; // Quick fallback for name
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    
+    const userEmail = localStorage.getItem("userEmail");
+
+    useEffect(() => {
+        const fetchUserProfile = async () => {
+            if (!userEmail) return;
+            
+            try {
+                const response = await api.get(`/users/view/${userEmail}`);
+                setUserData(response.data);
+            } catch (err) {
+                console.error("Failed to fetch user profile:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserProfile();
+    }, [userEmail]);
+
+    if (loading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <Loader2 className={`animate-spin ${isDark ? 'text-cyan-500' : 'text-cyan-600'}`} size={32} />
+            </div>
+        );
+    }
+
+    if (!userData) {
+        return (
+            <div className="text-center py-12 text-red-500 font-bold uppercase tracking-widest text-sm">
+                Failed to load profile data.
+            </div>
+        );
+    }
+
+    // Safely extract name, defaulting to email prefix if missing
+    const fullName = userData.firstName && userData.lastName 
+        ? `${userData.firstName} ${userData.lastName}` 
+        : userEmail.split('@')[0];
+
+    // Safely extract the first address from the list, if it exists
+    const defaultAddress = userData.addresses && userData.addresses.length > 0 
+        ? userData.addresses[0] 
+        : null;
 
     return (
         <div className="animate-in fade-in duration-500">
@@ -28,8 +75,8 @@ const AccountOverview = () => {
                         </button>
                     </div>
                     <div>
-                        <p className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{userName}</p>
-                        <p className={isDark ? 'text-slate-400' : 'text-gray-500'}>{userEmail}</p>
+                        <p className={`text-lg font-bold mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{fullName}</p>
+                        <p className={isDark ? 'text-slate-400' : 'text-gray-500'}>{userData.email}</p>
                     </div>
                 </div>
 
@@ -46,12 +93,24 @@ const AccountOverview = () => {
                     </div>
                     <div>
                         <p className={`text-sm font-bold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Your default shipping address:</p>
-                        <p className={`text-sm leading-relaxed uppercase ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                            {userName}<br />
-                            13 BOROKINI STREET IKORODU LAGOS STATE<br />
-                            Ikorodu-Garage, Lagos<br />
-                            +234 8083970700 / +234 7040544232
-                        </p>
+                        
+                        {/* Conditionally render address if it exists, otherwise prompt user to add one */}
+                        {defaultAddress ? (
+                            <p className={`text-sm leading-relaxed uppercase ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                                {fullName}<br />
+                                {defaultAddress.street}<br />
+                                {defaultAddress.city}, {defaultAddress.state} {defaultAddress.zipCode}<br />
+                                {defaultAddress.country}<br />
+                                {userData.mobileNumber && `+234 ${userData.mobileNumber.slice(1)}`}
+                            </p>
+                        ) : (
+                            <div className="py-2">
+                                <p className={`text-sm italic ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>No default address saved.</p>
+                                <Link to="/account/address" className="text-cyan-500 hover:text-cyan-600 text-[11px] font-bold uppercase tracking-widest mt-2 inline-block">
+                                    + Add New Address
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
 
