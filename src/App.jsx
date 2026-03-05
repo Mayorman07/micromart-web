@@ -1,7 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
-
-// GLOBAL CONTEXTS
 import { ToastProvider } from "./contexts/ToastContext"; 
 
 // LAYOUTS
@@ -29,19 +27,14 @@ import InventoryRegistry from "./pages/admin/InventoryRegistry";
 import InventoryDashboard from "./pages/admin/InventoryDashboard";
 import ProfileSettings from "./pages/admin/ProfileSettings";
 
-/**
- * MicroMart App Entry Point
- * Defines the routing hierarchy and layout structures.
- */
 function App() {
   return (
     <ToastProvider>
-      <ThemeProvider> {/* WRAPPED HERE */}
+      <ThemeProvider> 
         <BrowserRouter>
           <Routes>
-            {/* --- PUBLIC ACCESS ROUTES --- */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
+            {/* --- SYSTEM & INFO ROUTES --- */}
+            <Route path="/system-status" element={<UserDashboard />} /> {/* Moved your old dashboard here */}
             <Route path="/newsletter" element={<ComingSoon title="MicroMart Newsletter" />} />
 
             {/* --- AUTHENTICATION FLOWS --- */}
@@ -51,9 +44,13 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* --- PROTECTED USER ZONE --- */}
+            {/* --- STOREFRONT (NOW PUBLIC) --- */}
             <Route element={<UserLayout />}>
-                <Route path="/marketplace" element={<ProductGallery />} />
+                {/* 🎯 The true homepage is now the marketplace! */}
+                <Route path="/" element={<ProductGallery />} />
+                <Route path="/marketplace" element={<Navigate to="/" replace />} />
+                
+                {/* Orders remain under this layout, but should be guarded inside the Orders component */}
                 <Route path="/orders" element={<Orders />} />
             </Route>
 

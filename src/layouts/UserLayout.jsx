@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Outlet, Navigate } from "react-router-dom";
+import { Outlet } from "react-router-dom"; // Removed Navigate
 import UserNavbar from "../components/UserNavbar";
 import CartDrawer from "../components/CartDrawer";
 import { useTheme } from "../contexts/ThemeContext";
@@ -12,13 +12,12 @@ const UserLayout = () => {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     
+    // Determine auth state but DON'T force a redirect here anymore
     const isAuthenticated = !!localStorage.getItem("token");
 
-    // 1. Fetch Cart: Matches @GetMapping in CartController
     const fetchCart = useCallback(async () => {
         try {
             const response = await api.get("/cart/api/cart");
-            // Mapping to the 'items' field in your CartResponse
             setCartItems(response.data.items || []);
         } catch (err) {
             console.error("Registry Sync Error:", err);
@@ -27,21 +26,20 @@ const UserLayout = () => {
         }
     }, []);
 
+    // Only fetch the cart if they are actually logged in
     useEffect(() => {
-        if (isAuthenticated) fetchCart();
+        if (isAuthenticated) {
+            fetchCart();
+        } else {
+            setLoading(false);
+            setCartItems([]); // Ensure guests have an empty cart state
+        }
     }, [isAuthenticated, fetchCart]);
 
-    // 2. Persistent Quantity Update: Matches @PutMapping("/update")
     const handleUpdateQuantity = async (skuCode, newQty) => {
         if (newQty < 1) return;
         try {
-            // Sending CartRequest body as expected by your Controller
-            await api.put("/cart/api/cart/update", {
-                skuCode: skuCode,
-                quantity: newQty
-            });
-            
-            // Optimistic UI update
+            await api.put("/cart/api/cart/update", { skuCode, quantity: newQty });
             setCartItems(prev => prev.map(item => 
                 item.skuCode === skuCode ? { ...item, quantity: newQty } : item
             ));
@@ -50,7 +48,6 @@ const UserLayout = () => {
         }
     };
 
-    // 3. Persistent Removal: Matches @DeleteMapping("/remove/{skuCode}")
     const handleRemoveItem = async (skuCode) => {
         try {
             await api.delete(`/cart/api/cart/remove/${skuCode}`);
@@ -60,7 +57,6 @@ const UserLayout = () => {
         }
     };
 
-    // 4. Clear Registry: Matches @DeleteMapping("/clear")
     const handleClearCart = async () => {
         try {
             await api.delete("/cart/api/cart/clear");
@@ -70,9 +66,7 @@ const UserLayout = () => {
         }
     };
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
+    // THE LOGIN WALL IS GONE! Guests can now render the UI below.
 
     return (
         <div className="min-h-screen transition-colors duration-500 bg-[#fafafa] dark:bg-[#0a0f1d]">
@@ -83,19 +77,21 @@ const UserLayout = () => {
                 cartItems={cartItems}
                 onUpdateQuantity={handleUpdateQuantity}
                 onRemoveItem={handleRemoveItem}
-                onClearCart={handleClearCart} // New handler added
+                onClearCart={handleClearCart}
             />
 
             <UserNavbar 
                 cartItemCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)} 
                 onOpenCart={() => setIsCartOpen(true)}
                 searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm} 
+                setSearchTerm={setSearchTerm}
+                isAuthenticated={isAuthenticated} // Pass to Navbar to toggle Login/Profile buttons
             />
 
             <main className="pt-32 pb-20 px-4 md:px-8">
                 <div className="max-w-7xl mx-auto">
-                    <Outlet context={{ setIsCartOpen, setCartItems, searchTerm, fetchCart }} /> 
+                    {/* 🎯 Pass isAuthenticated down so ProductGallery can guard the Add to Cart button */}
+                    <Outlet context={{ setIsCartOpen, setCartItems, searchTerm, fetchCart, isAuthenticated }} /> 
                 </div>
             </main>
 
