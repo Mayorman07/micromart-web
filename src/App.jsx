@@ -5,6 +5,7 @@ import { ToastProvider } from "./contexts/ToastContext";
 // LAYOUTS
 import AdminLayout from "./layouts/AdminLayout";
 import UserLayout from "./layouts/UserLayout"; 
+import AccountLayout from "./layouts/AccountLayout"; // 🎯 NEW
 
 // PUBLIC & AUTHENTICATION MODULES
 import VerifyEmail from "./pages/Auth/VerifyEmail";
@@ -15,6 +16,7 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import UserDashboard from './pages/Dashboard/Dashboard'; 
 import ProductGallery from "./pages/Dashboard/ProductGallery";
 import Orders from "./pages/Dashboard/Orders"; 
+import AccountOverview from "./pages/Dashboard/AccountOverview"; // 
 import ComingSoon from "./pages/General/ComingSoon"; 
 
 // ADMINISTRATIVE CORE
@@ -34,7 +36,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             {/* --- SYSTEM & INFO ROUTES --- */}
-            <Route path="/system-status" element={<UserDashboard />} /> {/* Moved your old dashboard here */}
+            <Route path="/system-status" element={<UserDashboard />} /> 
             <Route path="/newsletter" element={<ComingSoon title="MicroMart Newsletter" />} />
 
             {/* --- AUTHENTICATION FLOWS --- */}
@@ -44,14 +46,30 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* --- STOREFRONT (NOW PUBLIC) --- */}
+            {/* --- STOREFRONT & USER ZONE --- */}
             <Route element={<UserLayout />}>
-                {/* 🎯 The true homepage is now the marketplace! */}
+                
+                {/* 1. Public Storefront */}
                 <Route path="/" element={<ProductGallery />} />
                 <Route path="/marketplace" element={<Navigate to="/" replace />} />
                 
-                {/* Orders remain under this layout, but should be guarded inside the Orders component */}
-                <Route path="/orders" element={<Orders />} />
+                {/* 2. Authenticated Account Dashboard (Wrapped in Sidebar) */}
+                <Route element={<AccountLayout />}>
+                    <Route path="/account" element={<AccountOverview />} />
+                    <Route path="/orders" element={<Orders />} />
+                    
+                    {/* Placeholder routes for the rest of the sidebar links */}
+                    <Route path="/account/inbox" element={<ComingSoon title="Inbox" />} />
+                    <Route path="/account/reviews" element={<ComingSoon title="Pending Reviews" />} />
+                    <Route path="/account/voucher" element={<ComingSoon title="Vouchers" />} />
+                    <Route path="/account/wishlist" element={<ComingSoon title="Wishlist" />} />
+                    <Route path="/account/recent" element={<ComingSoon title="Recently Viewed" />} />
+                    <Route path="/account/management" element={<ComingSoon title="Account Management" />} />
+                    <Route path="/account/payments" element={<ComingSoon title="Payment Settings" />} />
+                    <Route path="/account/address" element={<ComingSoon title="Address Book" />} />
+                    <Route path="/account/newsletter" element={<ComingSoon title="Newsletter Preferences" />} />
+                </Route>
+
             </Route>
 
             {/* --- ADMINISTRATIVE RESTRICTED ZONE --- */}

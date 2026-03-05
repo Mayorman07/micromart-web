@@ -1,15 +1,14 @@
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useToast } from "../contexts/ToastContext";
-import { Sun, Moon, Search, ShoppingBag, Heart, LogOut, User, X, LogIn, UserPlus } from "lucide-react"; // Added LogIn and UserPlus
+import { Sun, Moon, Search, ShoppingBag, Heart, LogOut, User, X, LogIn, UserPlus } from "lucide-react"; 
 import { useTheme } from "../contexts/ThemeContext";
 
-//  Added 'isAuthenticated' to props
 const UserNavbar = ({ cartItemCount = 0, onOpenCart, searchTerm, setSearchTerm, isAuthenticated }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { showToast } = useToast();
     const { isDark, toggleTheme } = useTheme();
-    const userEmail = localStorage.getItem("userEmail") || ""; // Default to empty string if not logged in
+    const userEmail = localStorage.getItem("userEmail") || ""; 
 
     const handleLogout = () => {
         localStorage.clear();
@@ -79,15 +78,19 @@ const UserNavbar = ({ cartItemCount = 0, onOpenCart, searchTerm, setSearchTerm, 
                         {/* CONDITIONAL AUTHENTICATION UI */}
                         {isAuthenticated ? (
                             <>
-                                <div className="flex items-center gap-2 cursor-pointer group hidden sm:flex">
+                                {/* 🎯 THE FIX: Wrapped in a Link to /account and removed the light/dark text toggle */}
+                                <Link to="/account" className="flex items-center gap-2 cursor-pointer group hidden sm:flex">
                                     <User size={18} className="group-hover:text-cyan-500 transition-colors" />
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black uppercase tracking-tighter leading-none">{userEmail.split('@')[0]}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-tighter leading-none group-hover:text-cyan-500 transition-colors">
+                                            {userEmail.split('@')[0]}
+                                        </p>
                                         <p className={`text-[8px] font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-cyan-500' : 'text-cyan-600'}`}>
-                                            {isDark ? "PREMIUM_USER" : "MEMBER"}
+                                            MEMBER
                                         </p>
                                     </div>
-                                </div>
+                                </Link>
+
                                 <Heart size={18} className="cursor-pointer hover:text-red-400 transition-colors hidden xs:block" />
                                 <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Logout">
                                     <LogOut size={18} />
@@ -105,7 +108,7 @@ const UserNavbar = ({ cartItemCount = 0, onOpenCart, searchTerm, setSearchTerm, 
                             </div>
                         )}
 
-                        {/* SHOPPING BAG (Always visible, but empty for guests right now) */}
+                        {/* SHOPPING BAG */}
                         <div 
                             className="relative cursor-pointer hover:scale-110 transition-transform active:scale-95" 
                             onClick={onOpenCart}
@@ -124,12 +127,9 @@ const UserNavbar = ({ cartItemCount = 0, onOpenCart, searchTerm, setSearchTerm, 
                 {/* SUB NAV */}
                 <div className="flex justify-center gap-10 mt-5 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] border-t border-gray-100 dark:border-white/5">
                     <Link to="/" className={activeClass("/")}>Marketplace</Link>
-                    
-                    {/* 🎯 Hide "My Orders" if they aren't logged in */}
                     {isAuthenticated && (
                         <Link to="/orders" className={activeClass("/orders")}>My Orders</Link>
                     )}
-                    
                     <Link to="/brands" className={activeClass("/brands")}>Brands +</Link>
                     <Link to="/offers" className={activeClass("/offers")}>Special Offers</Link>
                 </div>
