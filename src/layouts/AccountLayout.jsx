@@ -1,10 +1,13 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, Navigate } from "react-router-dom"; // 🎯 Added Navigate
 import { User, Package, Mail, MessageSquare, Tag, Heart, Eye, Settings, CreditCard, MapPin, Bell } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 
 const AccountLayout = () => {
     const { isDark } = useTheme();
     const location = useLocation();
+
+    //  Check for the authentication token
+    const isAuthenticated = !!localStorage.getItem("token");
 
     // Navigation configuration
     const navSections = [
@@ -30,6 +33,12 @@ const AccountLayout = () => {
             ]
         }
     ];
+
+    //  GUARD CLAUSE: If they aren't logged in, bounce them to login
+    if (!isAuthenticated) {
+        // Passing state={{ from: location }} allows you to redirect them back here AFTER they log in!
+        return <Navigate to="/login" replace state={{ from: location }} />;
+    }
 
     return (
         <div className="flex flex-col md:flex-row gap-8 min-h-screen">
