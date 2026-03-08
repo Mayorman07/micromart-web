@@ -1,17 +1,12 @@
 import { useState } from "react";
 import { X, Plus, Minus, Trash2, ShoppingBag, Trash } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import PaymentModal from "./PaymentModal"; 
 
 /**
  * CartDrawer Component
- * * Displays a sliding side panel containing the user's current selected items.
- * Handles item quantity adjustments, removal, and the initiation of the checkout process.
- * * @param {boolean} isOpen - Controls the visibility of the drawer.
- * @param {function} onClose - Callback to close the drawer.
- * @param {Array} cartItems - Array of product objects currently in the cart.
- * @param {function} onUpdateQuantity - Callback to modify the quantity of a specific SKU.
- * @param {function} onRemoveItem - Callback to remove a specific SKU from the cart.
- * @param {function} onClearCart - Callback to empty the entire cart.
+ * Displays a sliding side panel containing the user's current selected items.
+ * Handles item quantity adjustments, removal, and opens the Payment Modal.
  */
 const CartDrawer = ({ 
     isOpen, 
@@ -23,8 +18,8 @@ const CartDrawer = ({
 }) => {
     const { isDark } = useTheme();
     
-    // Tracks the active state of the checkout API request to prevent duplicate submissions
-    const [isProcessing, setIsProcessing] = useState(false);
+    // 🎯 NEW: State to control the Payment Options Modal
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
     // Calculate the cumulative total of all items currently in the registry
     const subtotal = cartItems.reduce((acc, item) => {
@@ -32,77 +27,6 @@ const CartDrawer = ({
         const qty = item.quantity || 0;
         return acc + (price * qty);
     }, 0);
-
-    /**
-     * Initiates the payment process by communicating with the Payment microservice.
-     * Constructs the required DTO, handles the API transaction, and redirects to the 
-     * external payment gateway (Stripe) upon success.
-     */
-    const handleAuthorizePurchase = async () => {
-        setIsProcessing(true);
-
-        try {
-            // Retrieve the active authorization token from local storage
-            const token = localStorage.getItem("token"); 
-
-            // TODO: Replace mock order ID generation once the Order Service integration is complete
-            const tempOrderId = `ORD-MOCK-${Math.floor(Math.random() * 1000000)}`;
-            
-            // TODO: Extract authenticated user email dynamically from context or JWT payload
-            const userEmail = "mayowa.hyde@gmail.com"; 
-
-            // Map local cart state to the expected OrderItemDto structure defined in the backend
-            const formattedItems = cartItems.map(item => ({
-                skuCode: item.skuCode,
-                productName: item.productName,
-                imageUrl: item.imageUrl,
-                unitPrice: item.unitPrice,
-                quantity: item.quantity
-            }));
-
-            // Construct the comprehensive PaymentRequest payload
-            const payload = {
-                orderId: tempOrderId,
-                userEmail: userEmail,
-                totalAmount: subtotal,
-                currency: "USD",
-                paymentMethod: "STRIPE",
-                items: formattedItems
-            };
-
-            // Execute the transaction against the Payment Service gateway
-            const response = await fetch("http://127.0.0.1:7082/payment/api/payments/initiate", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "Authorization": `Bearer ${token}` 
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Payment initiation failed. Please try again.");
-            }
-
-            const data = await response.json();
-
-            // Redirect the client to the generated Stripe Checkout session URL
-            if (data.paymentUrl) {
-                window.location.href = data.paymentUrl;
-            } else {
-                throw new Error("Invalid response: Missing payment gateway URL.");
-            }
-
-        } catch (error) {
-            console.error("Checkout transaction error:", error);
-            // Fallback error alert - to be replaced with global UI toast notifications
-            alert(`Checkout failed: ${error.message}`); 
-        } finally {
-            setIsProcessing(false);
-        }
-    };
 
     return (
         <>
@@ -130,14 +54,13 @@ const CartDrawer = ({
                         {cartItems.length > 0 && (
                             <button 
                                 onClick={onClearCart}
-                                className="p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                                 title="Clear All"
-                                disabled={isProcessing}
                             >
                                 <Trash size={18} />
                             </button>
                         )}
-                        <button onClick={onClose} disabled={isProcessing} className="p-2 hover:rotate-90 transition-transform duration-300 disabled:opacity-50">
+                        <button onClick={onClose} className="p-2 hover:rotate-90 transition-transform duration-300">
                             <X size={24} />
                         </button>
                     </div>
@@ -166,8 +89,7 @@ const CartDrawer = ({
                                         <div className="flex items-center border border-gray-200 dark:border-white/10 rounded-lg">
                                             <button 
                                                 onClick={() => onUpdateQuantity(item.skuCode, item.quantity - 1)} 
-                                                disabled={isProcessing}
-                                                className="p-1 hover:text-cyan-500 transition-colors disabled:opacity-50"
+                                                className="p-1 hover:text-cyan-500 transition-colors"
                                             >
                                                 <Minus size={12} />
                                             </button>
@@ -176,16 +98,14 @@ const CartDrawer = ({
                                             </span>
                                             <button 
                                                 onClick={() => onUpdateQuantity(item.skuCode, item.quantity + 1)} 
-                                                disabled={isProcessing}
-                                                className="p-1 hover:text-cyan-500 transition-colors disabled:opacity-50"
+                                                className="p-1 hover:text-cyan-500 transition-colors"
                                             >
                                                 <Plus size={12} />
                                             </button>
                                         </div>
                                         <button 
                                             onClick={() => onRemoveItem(item.skuCode)}
-                                            disabled={isProcessing} 
-                                            className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                            className="text-gray-400 hover:text-red-500 transition-colors"
                                         >
                                             <Trash2 size={14} />
                                         </button>
@@ -211,28 +131,30 @@ const CartDrawer = ({
                         </span>
                     </div>
                     
+                    {/* 🎯 NEW: Button simply opens the Payment Modal now */}
                     <button 
-                        onClick={handleAuthorizePurchase}
-                        disabled={cartItems.length === 0 || isProcessing}
+                        onClick={() => setIsPaymentModalOpen(true)}
+                        disabled={cartItems.length === 0}
                         className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2
                         ${isDark 
                             ? 'bg-white text-black hover:bg-cyan-500 disabled:bg-gray-800 disabled:text-gray-500 shadow-lg shadow-cyan-500/20' 
                             : 'bg-cyan-500 text-white hover:bg-cyan-600 disabled:bg-cyan-200 shadow-xl shadow-cyan-500/20'}`}
                     >
-                        {isProcessing ? (
-                            <>
-                                <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-                                Processing...
-                            </>
-                        ) : (
-                            'Authorize Purchase'
-                        )}
+                        Authorize Purchase
                     </button>
                     <p className="text-[8px] text-center mt-4 opacity-40 uppercase tracking-tighter">
                         Secure transaction via MicroMart Distributed Systems
                     </p>
                 </div>
             </div>
+
+            {/* : The Payment Modal Component */}
+            <PaymentModal 
+                isOpen={isPaymentModalOpen} 
+                onClose={() => setIsPaymentModalOpen(false)} 
+                cartItems={cartItems}
+                totalAmount={subtotal}
+            />
         </>
     );
 };
