@@ -5,7 +5,7 @@ import { ToastProvider } from "./contexts/ToastContext";
 // LAYOUTS
 import AdminLayout from "./layouts/AdminLayout";
 import UserLayout from "./layouts/UserLayout"; 
-import AccountLayout from "./layouts/AccountLayout"; // 🎯 NEW
+import AccountLayout from "./layouts/AccountLayout"; 
 
 // PUBLIC & AUTHENTICATION MODULES
 import VerifyEmail from "./pages/Auth/VerifyEmail";
@@ -16,8 +16,12 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import UserDashboard from './pages/Dashboard/Dashboard'; 
 import ProductGallery from "./pages/Dashboard/ProductGallery";
 import Orders from "./pages/Dashboard/Orders"; 
-import AccountOverview from "./pages/Dashboard/AccountOverview"; // 
+import AccountOverview from "./pages/Dashboard/AccountOverview"; 
 import ComingSoon from "./pages/General/ComingSoon"; 
+
+//  PAYMENT OUTCOME PAGES
+import PaymentSuccess from "./pages/Payment/PaymentSuccess";
+import PaymentCancel from "./pages/Payment/PaymentCancel";
 
 // ADMINISTRATIVE CORE
 import AdminLogin from "./pages/Auth/AdminLogin";
@@ -53,7 +57,11 @@ function App() {
                 <Route path="/" element={<ProductGallery />} />
                 <Route path="/marketplace" element={<Navigate to="/" replace />} />
                 
-                {/* 2. Authenticated Account Dashboard (Wrapped in Sidebar) */}
+                {/* 💳 2. Payment Redirect Routes */}
+                <Route path="/payment/success" element={<PaymentSuccess />} />
+                <Route path="/payment/cancel" element={<PaymentCancel />} />
+
+                {/* 3. Authenticated Account Dashboard (Wrapped in Sidebar) */}
                 <Route element={<AccountLayout />}>
                     <Route path="/account" element={<AccountOverview />} />
                     <Route path="/orders" element={<Orders />} />
