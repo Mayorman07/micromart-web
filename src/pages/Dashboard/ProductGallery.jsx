@@ -6,26 +6,31 @@ import { useToast } from "../../contexts/ToastContext";
 import { SearchX, Loader2, XCircle, ShoppingBag } from "lucide-react"; 
 
 const ProductGallery = () => {
+    // Component State
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState(null); 
     const [sortBy, setSortBy] = useState("featured");
     
+    // Hooks & Contexts
     const { isDark } = useTheme();
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [searchParams] = useSearchParams();
     
+    // Safely destructure outlet context with fallback
     const context = useOutletContext() || {};
     const { searchTerm, fetchCart, isAuthenticated } = context;
     const categoryFilter = searchParams.get("category");
 
+    // Fetch Initial Data
     useEffect(() => {
         let isMounted = true;
         const loadRegistryData = async () => {
             setLoading(true);
             try {
+                // Fetching from INVENTORY service, which returns the 'category' string
                 const [prodRes, catRes] = await Promise.all([
                     api.get("/inventory/api/inventory/all"),
                     api.get("/products/categories/all")
@@ -43,12 +48,15 @@ const ProductGallery = () => {
                 if (isMounted) setLoading(false);
             }
         };
+        
         loadRegistryData();
         return () => { isMounted = false; };
     }, [showToast]);
 
+    // Cart Interactions
     const handleQuickAdd = async (e, product) => {
-        e.stopPropagation();
+        e.stopPropagation(); 
+        
         if (!isAuthenticated) return navigate("/login");
 
         setProcessingId(product.skuCode);
@@ -57,6 +65,7 @@ const ProductGallery = () => {
                 skuCode: product.skuCode,
                 quantity: 1
             });
+            
             if (fetchCart) await fetchCart();
             showToast(`${product.name} added to cart`, "success");
         } catch (err) {
@@ -66,28 +75,39 @@ const ProductGallery = () => {
         }
     };
 
+    // Derived State: Display Name for Header
     const activeCategoryName = useMemo(() => {
         const cat = categories.find(c => String(c.id) === String(categoryFilter));
         return cat ? cat.name : "Marketplace";
     }, [categories, categoryFilter]);
 
+    // Derived State: Filtered & Sorted Product List
     const filteredProducts = useMemo(() => {
         const activeCategory = categories.find(c => String(c.id) === String(categoryFilter));
         const targetName = activeCategory?.name?.toLowerCase().trim();
 
         return products.filter(p => {
+            // 1. Evaluate Search Term Match
             const matchesSearch = !searchTerm || 
                 p.name?.toLowerCase().includes(searchTerm.toLowerCase());
-            const productCategoryName = p.category?.toLowerCase()?.trim();
-            const matchesCategory = !categoryFilter || productCategoryName === targetName;
+            
+            // 2. Evaluate Category String Match (Using p.category from the Inventory response)
+            let matchesCategory = true;
+            if (categoryFilter && targetName) {
+                const productCategoryName = p.category?.toLowerCase()?.trim() || "";
+                matchesCategory = productCategoryName === targetName || productCategoryName.includes(targetName);
+            }
+
             return matchesSearch && matchesCategory;
         }).sort((a, b) => {
+            // Sorting Logic
             if (sortBy === "price-low") return a.price - b.price;
             if (sortBy === "price-high") return b.price - a.price;
             return 0;
         });
     }, [products, searchTerm, categoryFilter, categories, sortBy]);
 
+    // Loading State UI
     if (loading) return (
         <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-[#050505]' : 'bg-white'}`}>
             <Loader2 className="animate-spin text-cyan-500" size={32} />
@@ -98,7 +118,6 @@ const ProductGallery = () => {
         <div className={`min-h-screen pt-32 pb-20 px-8 md:px-16 transition-all duration-700 ${isDark ? 'bg-[#050505] text-white' : 'bg-white text-gray-900'}`}>
             
             <header className="max-w-[1600px] mx-auto mb-16">
-                {/* SUB-HEADER LABEL */}
                 <div className="flex items-center gap-3 mb-6">
                     <span className="text-[10px] font-bold tracking-[0.4em] text-cyan-500 uppercase">
                         {categoryFilter ? `Sector / ${activeCategoryName}` : "Global Registry"}
@@ -150,7 +169,6 @@ const ProductGallery = () => {
                                 ${product.price}
                             </div>
 
-                            {/* REFINED ADD TO CART OVERLAY */}
                             <div className="absolute inset-x-0 bottom-0 p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-500 bg-gradient-to-t from-black/60 to-transparent">
                                 <button 
                                     onClick={(e) => handleQuickAdd(e, product)}
@@ -171,7 +189,8 @@ const ProductGallery = () => {
                                 {product.name}
                             </h3>
                             <div className="flex items-center gap-3 opacity-30 font-bold text-[9px] uppercase tracking-widest">
-                                <span>{product.category}</span>
+                                {/* Mapped back to product.category to match the Inventory response */}
+                                <span>{product.category || 'Uncategorized'}</span>
                                 <span className="h-[1px] w-4 bg-current"></span>
                                 <span>{product.skuCode}</span>
                             </div>
