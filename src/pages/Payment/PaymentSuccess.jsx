@@ -2,24 +2,52 @@ import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, ShoppingBag, ArrowRight } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useCart } from "../../contexts/CartContext"; 
+import confetti from 'canvas-confetti';
 
 const PaymentSuccess = () => {
     const { isDark } = useTheme();
+    const { clearCart } = useCart(); // Get clearCart function
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     
     const orderId = searchParams.get("orderId");
 
     useEffect(() => {
-        // TODO: In the future, you can trigger your 'clearCart' context function here
-        // so the registry is empty when they go back to the shop!
-    }, []);
+        // 1. Clear the cart so it's fresh for the next purchase
+        if (clearCart) clearCart();
+
+        // 2. Trigger Confetti Celebration
+        const end = Date.now() + 3 * 1000;
+        const colors = ['#00b4db', '#10b981', '#ffffff'];
+
+        (function frame() {
+            confetti({
+                particleCount: 3,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 },
+                colors: colors
+            });
+            confetti({
+                particleCount: 3,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 },
+                colors: colors
+            });
+
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
+    }, [clearCart]);
 
     return (
         <div className={`min-h-screen flex items-center justify-center p-6 transition-colors duration-500 
             ${isDark ? 'bg-[#0a0f1d] text-white' : 'bg-gray-50 text-gray-900'}`}>
             
-            <div className={`max-w-md w-full p-8 rounded-2xl shadow-2xl text-center border
+            <div className={`max-w-md w-full p-8 rounded-2xl shadow-2xl text-center border animate-in fade-in zoom-in duration-500
                 ${isDark ? 'bg-[#0d1425] border-white/5' : 'bg-white border-gray-100'}`}>
                 
                 <div className="flex justify-center mb-6">
@@ -47,7 +75,7 @@ const PaymentSuccess = () => {
 
                 <div className="space-y-3">
                     <button 
-                        onClick={() => navigate('/orders')} // Adjust route to your orders page
+                        onClick={() => navigate('/orders')} 
                         className={`w-full py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2
                             ${isDark ? 'bg-white text-black hover:bg-cyan-500 hover:text-white' : 'bg-cyan-500 text-white hover:bg-cyan-600'}`}
                     >
@@ -56,7 +84,7 @@ const PaymentSuccess = () => {
                     </button>
                     
                     <button 
-                        onClick={() => navigate('/')} // Adjust route to your marketplace
+                        onClick={() => navigate('/')} 
                         className="w-full py-4 rounded-xl text-xs font-bold uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity flex items-center justify-center gap-2"
                     >
                         Continue Shopping
