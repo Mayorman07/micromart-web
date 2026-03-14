@@ -1,4 +1,6 @@
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import api from "../services/api"; 
 import { useToast } from "../contexts/ToastContext";
 import { Sun, Moon, Search, ShoppingBag, Heart, LogOut, User, X, LogIn, UserPlus } from "lucide-react"; 
 import { useTheme } from "../contexts/ThemeContext";
@@ -9,6 +11,26 @@ const UserNavbar = ({ cartItemCount = 0, onOpenCart, searchTerm, setSearchTerm, 
     const { showToast } = useToast();
     const { isDark, toggleTheme } = useTheme();
     const userEmail = localStorage.getItem("userEmail") || ""; 
+    const [categories, setCategories] = useState([]);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await api.get("/products/categories/all");
+                setCategories(response.data);
+            } catch (error) {
+                console.error("Failed to fetch categories", error);
+                setCategories([
+                    { id: 1, name: "Eyewear" },
+                    { id: 2, name: "RC Hobbies" },
+                    { id: 3, name: "Drones" },
+                    { id: 4, name: "Anime Collectibles" },
+                    { id: 5, name: "Pokemon" }
+                ]);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     const handleLogout = () => {
         localStorage.clear();
@@ -18,119 +40,74 @@ const UserNavbar = ({ cartItemCount = 0, onOpenCart, searchTerm, setSearchTerm, 
 
     const activeClass = (path) => 
         location.pathname === path 
-            ? "border-b border-gray-800 dark:border-cyan-500 pb-0.5" 
+            ? "border-b-2 border-gray-800 dark:border-cyan-500 pb-1" 
             : "hover:opacity-60 transition-opacity";
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 font-sans
-            dark:bg-[#0a0f1d]/90 dark:backdrop-blur-xl dark:border-white/5 
+        <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-500
+            dark:bg-[#0a0f1d]/95 dark:backdrop-blur-xl dark:border-white/5 
             bg-white/95 backdrop-blur-md border-b border-gray-100 text-gray-800 dark:text-white">
             
-            <div className={`py-2 text-center text-[10px] font-bold tracking-[0.2em] uppercase transition-colors duration-500
+            <div className={`py-2 text-center text-[10px] font-bold tracking-[0.2em] uppercase
                 ${isDark ? 'bg-cyan-900/40 text-cyan-400' : 'bg-cyan-50 text-cyan-700 border-b border-cyan-100'}`}>
-                {isDark 
-                    ? "// NEURAL LINK ESTABLISHED :: ENCRYPTED TRANSACTION PROTOCOLS ACTIVE" 
-                    : "AUTHENTICITY GUARANTEED: EXPLORE OUR SOURCE CODE & HARDWARE ORIGINS"}
+                {isDark ? "// NEURAL LINK ESTABLISHED" : "AUTHENTICITY GUARANTEED"}
             </div>
 
-            <div className="max-w-7xl mx-auto px-8 py-5">
+            <div className="max-w-7xl mx-auto px-8 py-6">
                 <div className="flex justify-between items-center">
-                    
-                    {/* SEARCH */}
                     <div className="hidden md:flex w-1/3 items-center border-b border-gray-200 dark:border-white/10 pb-1 max-w-[180px] group relative">
                         <Search size={14} className="text-gray-400 mr-2 group-focus-within:text-cyan-500 transition-colors" />
-                        <input 
-                            type="text" 
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="type to search.." 
-                            className="bg-transparent outline-none text-[11px] placeholder:italic w-full italic focus:placeholder-transparent"
-                        />
-                        {searchTerm && (
-                            <button 
-                                onClick={() => setSearchTerm("")}
-                                className="absolute right-0 hover:text-cyan-500 transition-colors"
-                            >
-                                <X size={12} strokeWidth={3} />
-                            </button>
-                        )}
+                        <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="SEARCH ASSETS.." className="bg-transparent outline-none text-[11px] w-full" />
                     </div>
 
-                    {/* LOGO */}
                     <Link to="/" className="flex flex-col items-center group">
-                        <span className={`text-3xl tracking-tighter transition-all duration-700
-                            ${isDark ? 'font-black uppercase text-white group-hover:text-cyan-400' : 'font-serif italic lowercase text-gray-900'}`}>
-                            micromart<span className={isDark ? "text-cyan-500" : "font-sans not-italic font-light ml-0.5"}>4</span>
+                        <span className={`text-4xl tracking-tighter transition-all duration-700
+                            ${isDark ? 'font-black uppercase text-white group-hover:text-cyan-400' : 'font-serif italic text-gray-900'}`}>
+                            micromart<span className="text-cyan-500">4</span>
                         </span>
                     </Link>
 
-                    {/* UTILITIES */}
                     <div className="flex w-1/3 justify-end items-center gap-6">
-                        <button 
-                            onClick={toggleTheme}
-                            className="p-2 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-all active:scale-90"
-                        >
-                            {isDark ? <Sun size={17} className="text-yellow-400" /> : <Moon size={17} className="text-slate-600" />}
-                        </button>
-
-                        <div className="h-6 w-[1px] bg-gray-200 dark:bg-white/10 hidden sm:block"></div>
-
-                        {/* CONDITIONAL AUTHENTICATION UI */}
+                        <button onClick={toggleTheme}>{isDark ? <Sun size={18} /> : <Moon size={18} />}</button>
                         {isAuthenticated ? (
-                            <>
-                                {/* 🎯 THE FIX: Wrapped in a Link to /account and removed the light/dark text toggle */}
-                                <Link to="/account" className="flex items-center gap-2 cursor-pointer group hidden sm:flex">
-                                    <User size={18} className="group-hover:text-cyan-500 transition-colors" />
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black uppercase tracking-tighter leading-none group-hover:text-cyan-500 transition-colors">
-                                            {userEmail.split('@')[0]}
-                                        </p>
-                                        <p className={`text-[8px] font-bold uppercase tracking-widest mt-0.5 ${isDark ? 'text-cyan-500' : 'text-cyan-600'}`}>
-                                            MEMBER
-                                        </p>
-                                    </div>
-                                </Link>
-
-                                <Heart size={18} className="cursor-pointer hover:text-red-400 transition-colors hidden xs:block" />
-                                <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Logout">
-                                    <LogOut size={18} />
-                                </button>
-                            </>
-                        ) : (
-                            <div className="hidden sm:flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest">
-                                <Link to="/login" className="flex items-center gap-1 hover:text-cyan-500 transition-colors">
-                                    <LogIn size={14} /> Sign In
-                                </Link>
-                                <Link to="/signup" className={`px-4 py-2 rounded-md transition-all flex items-center gap-1
-                                    ${isDark ? 'bg-cyan-500 text-white hover:bg-cyan-600' : 'bg-gray-900 text-white hover:bg-gray-800'}`}>
-                                    <UserPlus size={14} /> Register
-                                </Link>
+                            <div className="flex gap-4 items-center">
+                                <Link to="/account"><User size={20} /></Link>
+                                <button onClick={handleLogout}><LogOut size={20} /></button>
                             </div>
+                        ) : (
+                            <Link to="/login" className="text-xs font-bold uppercase tracking-widest">Sign In</Link>
                         )}
-
-                        {/* SHOPPING BAG */}
-                        <div 
-                            className="relative cursor-pointer hover:scale-110 transition-transform active:scale-95" 
-                            onClick={onOpenCart}
-                        >
-                            <ShoppingBag size={20} />
-                            {cartItemCount > 0 && (
-                                <span className={`absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold shadow-sm transition-colors duration-500
-                                    ${isDark ? 'bg-cyan-500 text-white shadow-cyan-500/40' : 'bg-cyan-500 text-white shadow-md shadow-cyan-500/20'}`}>
-                                    {cartItemCount}
-                                </span>
-                            )}
+                        <div className="relative cursor-pointer" onClick={onOpenCart}>
+                            <ShoppingBag size={22} />
+                            {cartItemCount > 0 && <span className="absolute -right-2 -top-2 bg-cyan-500 text-white rounded-full h-4 w-4 text-[9px] flex items-center justify-center font-bold">{cartItemCount}</span>}
                         </div>
                     </div>
                 </div>
 
-                {/* SUB NAV */}
-                <div className="flex justify-center gap-10 mt-5 pt-3 text-[10px] font-bold uppercase tracking-[0.2em] border-t border-gray-100 dark:border-white/5">
+                <div className="flex justify-center gap-12 mt-6 pt-4 text-[11px] font-black uppercase tracking-[0.2em] border-t border-gray-100 dark:border-white/5">
                     <Link to="/" className={activeClass("/")}>Marketplace</Link>
-                    {isAuthenticated && (
-                        <Link to="/orders" className={activeClass("/orders")}>My Orders</Link>
-                    )}
-                    <Link to="/brands" className={activeClass("/brands")}>Brands +</Link>
+                    
+                    <div className="group relative">
+                        <button className="hover:text-cyan-500 transition-colors flex items-center gap-1">
+                            Collections <span className="text-[10px] opacity-40">+</span>
+                        </button>
+                        <div className="absolute top-full -left-10 hidden group-hover:block pt-4 w-64 animate-in fade-in slide-in-from-top-1">
+                            <div className={`overflow-hidden rounded-[2rem] border shadow-2xl backdrop-blur-xl
+                                ${isDark ? 'bg-[#0a0f1d]/95 border-white/10' : 'bg-white/95 border-gray-100'}`}>
+                                <div className="py-4">
+                                    {categories.map((cat) => (
+                                        <button key={cat.id} onClick={() => navigate(`/?category=${cat.id}`)}
+                                            className={`w-full text-left px-8 py-4 text-xs font-black uppercase tracking-widest transition-all
+                                                ${isDark ? 'text-gray-400 hover:text-cyan-400 hover:bg-white/5' : 'text-gray-500 hover:text-cyan-600 hover:bg-cyan-50'}`}>
+                                            {cat.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {isAuthenticated && <Link to="/orders" className={activeClass("/orders")}>My Orders</Link>}
                     <Link to="/offers" className={activeClass("/offers")}>Special Offers</Link>
                 </div>
             </div>

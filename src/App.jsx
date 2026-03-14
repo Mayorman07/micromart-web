@@ -7,7 +7,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import UserLayout from "./layouts/UserLayout"; 
 import AccountLayout from "./layouts/AccountLayout"; 
 
-// PUBLIC & AUTHENTICATION MODULES
+// MODULES
 import VerifyEmail from "./pages/Auth/VerifyEmail";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
@@ -18,12 +18,14 @@ import ProductGallery from "./pages/Dashboard/ProductGallery";
 import Orders from "./pages/Dashboard/Orders"; 
 import AccountOverview from "./pages/Dashboard/AccountOverview"; 
 import ComingSoon from "./pages/General/ComingSoon"; 
+import OrderTracking from "./pages/Dashboard/OrderTracking"; 
+import Checkout from "./pages/General/Checkout"; 
 
-//  PAYMENT OUTCOME PAGES
+// PAYMENT
 import PaymentSuccess from "./pages/Payment/PaymentSuccess";
 import PaymentCancel from "./pages/Payment/PaymentCancel";
 
-// ADMINISTRATIVE CORE
+// ADMIN
 import AdminLogin from "./pages/Auth/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard"; 
 import AddProduct from "./pages/admin/AddProduct";     
@@ -39,50 +41,38 @@ function App() {
       <ThemeProvider> 
         <BrowserRouter>
           <Routes>
-            {/* --- SYSTEM & INFO ROUTES --- */}
-            <Route path="/system-status" element={<UserDashboard />} /> 
-            <Route path="/newsletter" element={<ComingSoon title="MicroMart Newsletter" />} />
-
-            {/* --- AUTHENTICATION FLOWS --- */}
+            {/* AUTHENTICATION */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/verify" element={<VerifyEmail />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* --- STOREFRONT & USER ZONE --- */}
+            {/* STOREFRONT & USER ZONE */}
             <Route element={<UserLayout />}>
-                
-                {/* 1. Public Storefront */}
-                <Route path="/" element={<ProductGallery />} />
+                {/* Fixed: Alias to prevent 404 after Login redirect */}
                 <Route path="/marketplace" element={<Navigate to="/" replace />} />
+                <Route path="/" element={<ProductGallery />} />
                 
-                {/* 💳 2. Payment Redirect Routes */}
+                {/* 💳 Payment & Tracking Routes */}
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
+                <Route path="/orders/track/:orderId" element={<OrderTracking />} />
+                
+                {/* Checkout flows */}
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/checkout/retry/:orderId" element={<Checkout isRetry={true} />} />
 
-                {/* 3. Authenticated Account Dashboard (Wrapped in Sidebar) */}
+                {/* AUTHENTICATED ACCOUNT ZONE */}
                 <Route element={<AccountLayout />}>
                     <Route path="/account" element={<AccountOverview />} />
                     <Route path="/orders" element={<Orders />} />
-                    
-                    {/* Placeholder routes for the rest of the sidebar links */}
-                    <Route path="/account/inbox" element={<ComingSoon title="Inbox" />} />
-                    <Route path="/account/reviews" element={<ComingSoon title="Pending Reviews" />} />
-                    <Route path="/account/voucher" element={<ComingSoon title="Vouchers" />} />
-                    <Route path="/account/wishlist" element={<ComingSoon title="Wishlist" />} />
-                    <Route path="/account/recent" element={<ComingSoon title="Recently Viewed" />} />
                     <Route path="/account/management" element={<ComingSoon title="Account Management" />} />
-                    <Route path="/account/payments" element={<ComingSoon title="Payment Settings" />} />
-                    <Route path="/account/address" element={<ComingSoon title="Address Book" />} />
-                    <Route path="/account/newsletter" element={<ComingSoon title="Newsletter Preferences" />} />
                 </Route>
-
             </Route>
 
-            {/* --- ADMINISTRATIVE RESTRICTED ZONE --- */}
+            {/* ADMINISTRATIVE ZONE */}
             <Route path="/admin/login" element={<AdminLogin />} />
-
             <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
@@ -94,6 +84,7 @@ function App() {
                 <Route path="registry" element={<InventoryRegistry />} /> 
             </Route>
 
+            {/* FALLBACK */}
             <Route path="*" element={<ComingSoon title="404: Route Not Found" />} />
           </Routes>
         </BrowserRouter>

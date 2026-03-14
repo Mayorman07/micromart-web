@@ -45,14 +45,14 @@ api.interceptors.response.use(
                         localStorage.setItem("refreshToken", newRefreshToken);
                     }
 
-                    console.log("✅ Key rotation successful. Injecting new token into retry...");
+                    console.log("Key rotation successful. Injecting new token into retry...");
 
                     originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
                     
                     return api(originalRequest);
                 }
             } catch (refreshError) {
-                console.error("🚨 Refresh session expired. Redirecting to login.");
+                console.error("Refresh session expired. Redirecting to login.");
                 localStorage.clear();
                 window.location.href = "/login";
                 return Promise.reject(refreshError);
