@@ -13,8 +13,10 @@ import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
-import UserDashboard from './pages/Dashboard/Dashboard'; 
+
+// STOREFRONT & USER DASHBOARD VIEWS
 import ProductGallery from "./pages/Dashboard/ProductGallery";
+import Offers from "./pages/views/Offers"; 
 import Orders from "./pages/Dashboard/Orders"; 
 import AccountOverview from "./pages/Dashboard/AccountOverview"; 
 import ComingSoon from "./pages/General/ComingSoon"; 
@@ -34,6 +36,7 @@ import UserList from "./pages/admin/UserList";
 import InventoryRegistry from "./pages/admin/InventoryRegistry";
 import InventoryDashboard from "./pages/admin/InventoryDashboard";
 import ProfileSettings from "./pages/admin/ProfileSettings";
+import AdminPayments from "./pages/admin/AdminPayments"; // New Administrative Module
 
 function App() {
   return (
@@ -50,9 +53,15 @@ function App() {
 
             {/* STOREFRONT & USER ZONE */}
             <Route element={<UserLayout />}>
-                {/* Fixed: Alias to prevent 404 after Login redirect */}
-                <Route path="/marketplace" element={<Navigate to="/" replace />} />
+                
+                {/* Product Gallery is the main landing page */}
                 <Route path="/" element={<ProductGallery />} />
+                
+                {/* Alias /marketplace to / to prevent legacy 404s */}
+                <Route path="/marketplace" element={<Navigate to="/" replace />} />
+                
+                {/* ⚡ Offers/Flash Sale Route */}
+                <Route path="/offers" element={<Offers />} />
                 
                 {/* 💳 Payment & Tracking Routes */}
                 <Route path="/payment/success" element={<PaymentSuccess />} />
@@ -81,7 +90,8 @@ function App() {
                 <Route path="settings" element={<ProfileSettings />} />
                 <Route path="operatives" element={<UserList />} />
                 <Route path="inventory" element={<InventoryDashboard />} />
-                <Route path="registry" element={<InventoryRegistry />} /> 
+                <Route path="registry" element={<InventoryRegistry />} />
+                <Route path="payments" element={<AdminPayments />} /> {/* Manual Approval Route */}
             </Route>
 
             {/* FALLBACK */}

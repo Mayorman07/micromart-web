@@ -15,22 +15,18 @@ const AdminLayout = () => {
 
   /**
    * Syncs administrative identity with the Spring Boot backend.
-   * Leverages the centralized api instance to handle token attachment and refresh logic.
    */
   useEffect(() => {
     const fetchAdminData = async () => {
       const token = localStorage.getItem("token");
       
-      // Initial route guard for unauthenticated access
       if (!token) {
         navigate("/admin/login");
         return;
       }
 
       try {
-        /** * The 'Authorization' header is now automatically handled by the 
-         * api.interceptors.request in api.js.
-         */
+        // Fetching admin profile data using a static identifier for the current session
         const adminEmail = "mayowa.hyde@gmail.com"; 
         const response = await api.get(`/users/users/view/${adminEmail}`);
         
@@ -39,7 +35,6 @@ const AdminLayout = () => {
         }
       } catch (e) {
         console.error("Administrative Sync Interrupted:", e);
-        // Catch unauthorized access or expired refresh tokens
         if (e.response?.status === 403 || e.response?.status === 401) {
           handleLogout();
         }
@@ -53,11 +48,11 @@ const AdminLayout = () => {
 
   /**
    * Terminated Session Logic
-   * Flushes all security tokens from local storage to prevent session hijacking.
+   * Flushes security tokens to prevent unauthorized access.
    */
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken"); // Critical: Flush refresh token to prevent silent re-auth
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
     navigate("/admin/login");
   };
@@ -66,6 +61,7 @@ const AdminLayout = () => {
   const menuItems = [
     { name: "Dashboard", path: "/admin/dashboard", icon: "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" },
     { name: "Inventory", path: "/admin/inventory", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
+    { name: "Payments", path: "/admin/payments", icon: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" }, // New Payments Item
     { name: "Operatives", path: "/admin/operatives", icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" },
   ];
 
@@ -125,7 +121,7 @@ const AdminLayout = () => {
 
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-950/10 border border-red-900/20 text-red-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-50 hover:text-white transition-all duration-300 group"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-950/10 border border-red-900/20 text-red-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all duration-300 group"
             >
               <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -137,7 +133,7 @@ const AdminLayout = () => {
       </aside>
 
       {/* VIEWPORT CONTENT */}
-      <main className="flex-1 ml-72 p-10 relative min-h-screen">
+      <main className="flex-1 ml-72 p-10 relative min-h-screen overflow-x-hidden">
         <div className="absolute top-0 left-0 w-full h-[600px] bg-cyan-900/5 blur-[150px] pointer-events-none" />
         <div className="relative z-10 max-w-7xl mx-auto">
           <Outlet />
