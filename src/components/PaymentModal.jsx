@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, CreditCard, Bitcoin, Building2, Copy, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -10,6 +10,40 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
     const [bankStep, setBankStep] = useState("SELECT");     
     const [copied, setCopied] = useState(false);
     const [paymentDetails, setPaymentDetails] = useState(null);
+
+    // --- POLLING LOGIC ---
+    useEffect(() => {
+        let pollInterval;
+
+        // Only poll if we have a session ID and it's a manual method (Bank/Crypto)
+        if (paymentDetails?.sessionId && selectedMethod !== "STRIPE") {
+            console.log("Polling started for reference:", paymentDetails.sessionId);
+
+            pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`http://127.0.0.1:7082/payment/api/payments/status/${paymentDetails.sessionId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log("Status Check:", data.status);
+
+                        // If status is PAID, redirect to success page
+                        if (data.status === "PAID" || data.status === "SUCCESS" || data.status === "COMPLETED") {
+                            clearInterval(pollInterval);
+                            onClose();
+                            window.location.href = `/payment/success?orderId=${paymentDetails.sessionId}`;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Polling error:", error);
+                }
+            }, 5000); // 5 second intervals
+        }
+
+        // Cleanup: clear timer if user closes modal or switches methods
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+        };
+    }, [paymentDetails, selectedMethod, onClose]);
 
     if (!isOpen) return null;
 
@@ -32,7 +66,7 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
                 quantity: item.quantity
             }));
 
-            // STEP 1: CREATE ORDER
+            // 1. Create Order
             const orderRes = await fetch("http://127.0.0.1:7082/order/api/orders", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", ...(token && { "Authorization": `Bearer ${token}` }) },
@@ -41,13 +75,13 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
             if (!orderRes.ok) throw new Error("Order creation failed");
             const orderData = await orderRes.json();
 
-            // STEP 2: INITIATE STRATEGY
+            // 2. Initiate Payment
             const payRes = await fetch("http://127.0.0.1:7082/payment/api/payments/initiate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", ...(token && { "Authorization": `Bearer ${token}` }) },
                 body: JSON.stringify({ orderId: orderData.orderNumber, userEmail: "mayowa.hyde@gmail.com", totalAmount, currency: "USD", paymentMethod: method, items: formattedItems })
             });
-            if (!payRes.ok) throw new Error("Payment strategy failed");
+            if (!payRes.ok) throw new Error("Payment initiation failed");
             const data = await payRes.json();
             
             setPaymentDetails(data);
@@ -91,7 +125,7 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
                     </div>
                 </div>
 
-                {/* Content */}
+                {/* Content Area */}
                 <div className="w-2/3 p-8 relative flex flex-col overflow-y-auto">
                     <button onClick={onClose} className="absolute top-6 right-6 opacity-40 hover:opacity-100"><X size={20} /></button>
                     <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
@@ -99,7 +133,7 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
                         {selectedMethod === "STRIPE" && (
                             <div className="text-center space-y-6">
                                 <h2 className="text-4xl font-black">${totalAmount.toFixed(2)}</h2>
-                                <button onClick={() => initiatePayment("STRIPE")} disabled={isProcessing} className="w-full py-4 rounded-xl bg-cyan-500 text-white font-bold hover:bg-cyan-600 disabled:opacity-50 flex justify-center gap-2">
+                                <button onClick={() => initiatePayment("STRIPE")} disabled={isProcessing} className="w-full py-4 rounded-xl bg-cyan-500 text-white font-bold flex justify-center gap-2">
                                     {isProcessing ? <Loader2 className="animate-spin" size={18} /> : 'CHECKOUT WITH CARD'}
                                 </button>
                             </div>
@@ -120,10 +154,11 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
                                         <div className={`p-5 rounded-2xl border text-left ${isDark ? 'bg-black/20 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
                                             <p className="text-[11px] leading-relaxed whitespace-pre-line font-bold opacity-80">{paymentDetails?.instructions}</p>
                                             <div className="pt-3 border-t border-white/5 flex justify-between items-center">
-                                                <div><p className="text-[9px] font-bold text-cyan-500 uppercase">TX Reference</p><p className="font-mono text-xs truncate max-w-[180px]">{paymentDetails?.sessionId}</p></div>
-                                                <button onClick={() => handleCopy(paymentDetails?.sessionId)} className="p-2 text-cyan-500"><Copy size={16} /></button>
+                                                <div><p className="text-[9px] font-bold text-cyan-500 uppercase">System Reference</p><p className="font-mono text-xs truncate max-w-[180px] font-bold">{paymentDetails?.sessionId}</p></div>
+                                                <button onClick={() => handleCopy(paymentDetails?.sessionId)} className="p-2 text-cyan-500 hover:bg-cyan-500/10 rounded-lg"><Copy size={16} /></button>
                                             </div>
                                         </div>
+                                        <div className="flex items-center justify-center gap-2 text-[10px] opacity-40 uppercase font-black"><Loader2 size={12} className="animate-spin" /> Verifying Transfer</div>
                                     </div>
                                 )}
                             </div>
@@ -156,14 +191,13 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
                                                 <button onClick={() => handleCopy(paymentDetails?.sessionId)}>{copied ? <CheckCircle2 className="text-emerald-500" size={18} /> : <Copy size={18} className="opacity-50" />}</button>
                                             </div>
                                         </div>
+                                        <div className="flex items-center justify-center gap-2 text-[10px] opacity-40 uppercase font-black"><Loader2 size={12} className="animate-spin" /> Awaiting network reflection</div>
                                     </div>
                                 )}
                             </div>
                         )}
                     </div>
-                    <div className="mt-auto pt-4 text-center border-t border-white/5 opacity-30 text-[9px] uppercase font-bold tracking-widest">
-                        Vault Secure Processing <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse ml-1" />
-                    </div>
+                    <div className="mt-auto pt-4 text-center border-t border-white/5 opacity-30 text-[9px] uppercase font-bold">Vault Secure Processing <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse ml-1" /></div>
                 </div>
             </div>
         </div>
