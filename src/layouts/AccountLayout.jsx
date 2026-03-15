@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, Navigate } from "react-router-dom";
-import { User, Package, Tag, CreditCard, MapPin } from "lucide-react";
+import { User, Package, Tag, CreditCard } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 
 const AccountLayout = () => {
@@ -20,7 +20,6 @@ const AccountLayout = () => {
             title: "Settings",
             links: [
                 { name: "Payment Settings", path: "/account/payments", icon: CreditCard },
-                { name: "Address Book", path: "/account/address", icon: MapPin },
             ]
         }
     ];
@@ -32,10 +31,6 @@ const AccountLayout = () => {
     return (
         <div className="flex flex-col md:flex-row gap-8 min-h-screen">
             
-            {/* 🎯 ADJUSTED: 
-                - top-52: Matches the main padding so it stays visible while scrolling.
-                - pt-12: Internal padding to push the "MY ACCOUNT" title down further.
-            */}
             <aside className={`w-full md:w-64 shrink-0 rounded-[2.5rem] p-7 pt-12 h-fit sticky top-52 transition-all duration-500
                 ${isDark 
                     ? 'bg-[#111827] border border-white/5 shadow-2xl shadow-black/40' 
@@ -44,7 +39,6 @@ const AccountLayout = () => {
                 {navSections.map((section, idx) => (
                     <div key={idx} className={idx !== 0 ? "mt-12" : "mt-0"}>
                         
-                        {/* 🎯 REFINED: Forced high-contrast White/Dark Grey for headers */}
                         <h3 className={`text-[11px] font-black uppercase tracking-[0.3em] mb-6 px-2
                             ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             {section.title}
@@ -77,7 +71,6 @@ const AccountLayout = () => {
                 ))}
             </aside>
 
-            {/* MAIN CONTENT AREA */}
             <div className="flex-1 min-h-[500px] animate-in fade-in slide-in-from-bottom-2 duration-700">
                 <Outlet />
             </div>

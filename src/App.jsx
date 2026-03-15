@@ -19,6 +19,7 @@ import ProductGallery from "./pages/Dashboard/ProductGallery";
 import Offers from "./pages/views/Offers"; 
 import Orders from "./pages/Dashboard/Orders"; 
 import AccountOverview from "./pages/Dashboard/AccountOverview"; 
+import Voucher from "./pages/Account/Voucher"; // 🎯 New Voucher Module
 import ComingSoon from "./pages/General/ComingSoon"; 
 import OrderTracking from "./pages/Dashboard/OrderTracking"; 
 import Checkout from "./pages/General/Checkout"; 
@@ -36,7 +37,7 @@ import UserList from "./pages/admin/UserList";
 import InventoryRegistry from "./pages/admin/InventoryRegistry";
 import InventoryDashboard from "./pages/admin/InventoryDashboard";
 import ProfileSettings from "./pages/admin/ProfileSettings";
-import AdminPayments from "./pages/admin/AdminPayments"; // New Administrative Module
+import AdminPayments from "./pages/admin/AdminPayments"; 
 
 function App() {
   return (
@@ -54,13 +55,8 @@ function App() {
             {/* STOREFRONT & USER ZONE */}
             <Route element={<UserLayout />}>
                 
-                {/* Product Gallery is the main landing page */}
                 <Route path="/" element={<ProductGallery />} />
-                
-                {/* Alias /marketplace to / to prevent legacy 404s */}
                 <Route path="/marketplace" element={<Navigate to="/" replace />} />
-                
-                {/* ⚡ Offers/Flash Sale Route */}
                 <Route path="/offers" element={<Offers />} />
                 
                 {/* 💳 Payment & Tracking Routes */}
@@ -76,7 +72,11 @@ function App() {
                 <Route element={<AccountLayout />}>
                     <Route path="/account" element={<AccountOverview />} />
                     <Route path="/orders" element={<Orders />} />
-                    <Route path="/account/management" element={<ComingSoon title="Account Management" />} />
+                    
+                    {/* 🎯 New functional and upcoming routes */}
+                    <Route path="/account/voucher" element={<Voucher />} />
+                    <Route path="/account/payments" element={<ComingSoon title="Payment Settings" />} />
+                    <Route path="/account/address" element={<ComingSoon title="Address Registry" />} />
                 </Route>
             </Route>
 
@@ -91,7 +91,7 @@ function App() {
                 <Route path="operatives" element={<UserList />} />
                 <Route path="inventory" element={<InventoryDashboard />} />
                 <Route path="registry" element={<InventoryRegistry />} />
-                <Route path="payments" element={<AdminPayments />} /> {/* Manual Approval Route */}
+                <Route path="payments" element={<AdminPayments />} />
             </Route>
 
             {/* FALLBACK */}
