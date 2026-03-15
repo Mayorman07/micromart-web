@@ -2,22 +2,25 @@ import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle2, ShoppingBag, ArrowRight } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useCart } from "../../contexts/CartContext"; 
 import confetti from 'canvas-confetti';
 
+/**
+ * PaymentSuccess Component
+ * Modern confirmation page with celebration confetti.
+ * Manually clears the local storage cart to ensure a fresh session.
+ */
 const PaymentSuccess = () => {
     const { isDark } = useTheme();
-    const { clearCart } = useCart(); // Get clearCart function
-    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     
     const orderId = searchParams.get("orderId");
 
     useEffect(() => {
-        // 1. Clear the cart so it's fresh for the next purchase
-        if (clearCart) clearCart();
+        // 1. CLEAR CART: Wipes the registry from storage so it's empty on next visit
+        localStorage.removeItem("cartItems"); 
 
-        // 2. Trigger Confetti Celebration
+        // 2. CELEBRATION: Trigger side-burst confetti cannons
         const end = Date.now() + 3 * 1000;
         const colors = ['#00b4db', '#10b981', '#ffffff'];
 
@@ -41,7 +44,7 @@ const PaymentSuccess = () => {
                 requestAnimationFrame(frame);
             }
         }());
-    }, [clearCart]);
+    }, []);
 
     return (
         <div className={`min-h-screen flex items-center justify-center p-6 transition-colors duration-500 
@@ -52,6 +55,7 @@ const PaymentSuccess = () => {
                 
                 <div className="flex justify-center mb-6">
                     <div className="relative">
+                        {/* Glow effect behind the checkmark */}
                         <div className="absolute inset-0 bg-emerald-500 blur-xl opacity-20 rounded-full animate-pulse" />
                         <CheckCircle2 size={80} className="text-emerald-500 relative z-10" />
                     </div>
@@ -62,7 +66,7 @@ const PaymentSuccess = () => {
                 </h1>
                 
                 <p className="opacity-60 text-sm mb-6">
-                    Thank you for your purchase! Your transaction has been securely processed.
+                    Thank you for your purchase! Your transaction has been securely processed and your registry has been cleared.
                 </p>
 
                 {orderId && (
@@ -90,6 +94,12 @@ const PaymentSuccess = () => {
                         Continue Shopping
                         <ArrowRight size={16} />
                     </button>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5">
+                    <p className="text-[9px] uppercase font-bold tracking-[0.2em] opacity-30">
+                        Authenticity Guaranteed • MicroMart Hub
+                    </p>
                 </div>
             </div>
         </div>
