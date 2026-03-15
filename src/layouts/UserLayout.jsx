@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Outlet } from "react-router-dom"; // Removed Navigate
+import { Outlet } from "react-router-dom";
 import UserNavbar from "../components/UserNavbar";
 import CartDrawer from "../components/CartDrawer";
 import { useTheme } from "../contexts/ThemeContext";
@@ -12,10 +12,10 @@ const UserLayout = () => {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // Determine auth state but DON'T force a redirect here anymore
     const isAuthenticated = !!localStorage.getItem("token");
 
     const fetchCart = useCallback(async () => {
+        if (!isAuthenticated) return;
         try {
             const response = await api.get("/cart/api/cart");
             setCartItems(response.data.items || []);
@@ -24,17 +24,11 @@ const UserLayout = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isAuthenticated]);
 
-    // Only fetch the cart if they are actually logged in
     useEffect(() => {
-        if (isAuthenticated) {
-            fetchCart();
-        } else {
-            setLoading(false);
-            setCartItems([]); // Ensure guests have an empty cart state
-        }
-    }, [isAuthenticated, fetchCart]);
+        fetchCart();
+    }, [fetchCart]);
 
     const handleUpdateQuantity = async (skuCode, newQty) => {
         if (newQty < 1) return;
@@ -66,10 +60,8 @@ const UserLayout = () => {
         }
     };
 
-    // THE LOGIN WALL IS GONE! Guests can now render the UI below.
-
     return (
-        <div className="min-h-screen transition-colors duration-500 bg-[#fafafa] dark:bg-[#0a0f1d]">
+        <div className={`min-h-screen flex flex-col transition-colors duration-500 ${isDark ? 'bg-[#0a0f1d] text-white' : 'bg-[#fafafa] text-gray-900'}`}>
             
             <CartDrawer 
                 isOpen={isCartOpen} 
@@ -80,25 +72,35 @@ const UserLayout = () => {
                 onClearCart={handleClearCart}
             />
 
+            {/* 🎯 NOTE: If you still see "Neural Link", open UserNavbar.jsx 
+              and delete the text there.
+            */}
             <UserNavbar 
                 cartItemCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)} 
                 onOpenCart={() => setIsCartOpen(true)}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
-                isAuthenticated={isAuthenticated} // Pass to Navbar to toggle Login/Profile buttons
+                isAuthenticated={isAuthenticated} 
             />
 
-            <main className="pt-32 pb-20 px-4 md:px-8">
+            {/* The 'pt-32' ensures the Navbar doesn't cover the 'My Orders' title.
+               The 'flex-1' ensures the footer stays at the bottom.
+            */}
+            <main className="flex-1 pt-32 pb-20 px-4 md:px-12 lg:px-16">
                 <div className="max-w-7xl mx-auto">
-                    {/* 🎯 Pass isAuthenticated down so ProductGallery can guard the Add to Cart button */}
                     <Outlet context={{ setIsCartOpen, setCartItems, searchTerm, fetchCart, isAuthenticated }} /> 
                 </div>
             </main>
 
-            <footer className="py-12 text-center border-t border-gray-200 dark:border-white/5 transition-colors duration-500">
-                <p className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 dark:text-white text-gray-900">
-                    DISTRIBUTED SYSTEMS & PREMIUM HARDWARE REGISTRY
-                </p>
+            <footer className="py-12 border-t border-gray-200 dark:border-white/5 transition-colors">
+                <div className="max-w-7xl mx-auto px-8 flex justify-between items-center opacity-40">
+                    <p className="text-[10px] uppercase tracking-[0.3em] font-black">
+                        Hardware Registry System
+                    </p>
+                    <p className="text-[9px] uppercase font-bold tracking-widest">
+                        &copy; 2026 MICROMART HUB
+                    </p>
+                </div>
             </footer>
         </div>
     );
