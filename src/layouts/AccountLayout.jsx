@@ -2,19 +2,11 @@ import { NavLink, Outlet, useLocation, Navigate } from "react-router-dom";
 import { User, Package, Tag, CreditCard, MapPin } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 
-/**
- * AccountLayout Component
- * Central hub for user-authenticated pages. 
- * Features a high-contrast sidebar with improved header visibility.
- */
 const AccountLayout = () => {
     const { isDark } = useTheme();
     const location = useLocation();
-
-    // Check for secure authentication token
     const isAuthenticated = !!localStorage.getItem("token");
 
-    // Navigation configuration
     const navSections = [
         {
             title: "My Account",
@@ -33,7 +25,6 @@ const AccountLayout = () => {
         }
     ];
 
-    // GUARD: Redirect unauthorized sessions
     if (!isAuthenticated) {
         return <Navigate to="/login" replace state={{ from: location }} />;
     }
@@ -41,18 +32,21 @@ const AccountLayout = () => {
     return (
         <div className="flex flex-col md:flex-row gap-8 min-h-screen">
             
-            {/* SIDEBAR - Fixed Header Visibility & Spacing */}
-            <aside className={`w-full md:w-64 shrink-0 rounded-[2.5rem] p-7 h-fit sticky top-28 transition-all duration-500
+            {/* 🎯 ADJUSTED: 
+                - top-52: Matches the main padding so it stays visible while scrolling.
+                - pt-12: Internal padding to push the "MY ACCOUNT" title down further.
+            */}
+            <aside className={`w-full md:w-64 shrink-0 rounded-[2.5rem] p-7 pt-12 h-fit sticky top-52 transition-all duration-500
                 ${isDark 
                     ? 'bg-[#111827] border border-white/5 shadow-2xl shadow-black/40' 
                     : 'bg-white border border-gray-100 shadow-sm'}`}>
                 
                 {navSections.map((section, idx) => (
-                    <div key={idx} className={idx !== 0 ? "mt-12" : "mt-2"}>
+                    <div key={idx} className={idx !== 0 ? "mt-12" : "mt-0"}>
                         
-                        {/* 🎯 FIXED: Increased visibility for 'MY ACCOUNT' and 'SETTINGS' */}
-                        <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] mb-6 px-2
-                            ${isDark ? 'text-cyan-500/90' : 'text-gray-400'}`}>
+                        {/* 🎯 REFINED: Forced high-contrast White/Dark Grey for headers */}
+                        <h3 className={`text-[11px] font-black uppercase tracking-[0.3em] mb-6 px-2
+                            ${isDark ? 'text-white' : 'text-gray-900'}`}>
                             {section.title}
                         </h3>
                         

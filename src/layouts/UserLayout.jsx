@@ -72,9 +72,6 @@ const UserLayout = () => {
                 onClearCart={handleClearCart}
             />
 
-            {/* 🎯 NOTE: If you still see "Neural Link", open UserNavbar.jsx 
-              and delete the text there.
-            */}
             <UserNavbar 
                 cartItemCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)} 
                 onOpenCart={() => setIsCartOpen(true)}
@@ -83,12 +80,10 @@ const UserLayout = () => {
                 isAuthenticated={isAuthenticated} 
             />
 
-            {/* The 'pt-32' ensures the Navbar doesn't cover the 'My Orders' title.
-               The 'flex-1' ensures the footer stays at the bottom.
-            */}
-            <main className="flex-1 pt-32 pb-20 px-4 md:px-12 lg:px-16">
+            {/* 🎯 ADJUSTED: Increased pt-32 to pt-52 to clear the tall triple-decker navbar */}
+            <main className="flex-1 pt-52 pb-20 px-4 md:px-12 lg:px-16">
                 <div className="max-w-7xl mx-auto">
-                    <Outlet context={{ setIsCartOpen, setCartItems, searchTerm, fetchCart, isAuthenticated }} /> 
+                    <Outlet context={{ setIsCartOpen, setSearchTerm, fetchCart, isAuthenticated }} /> 
                 </div>
             </main>
 
