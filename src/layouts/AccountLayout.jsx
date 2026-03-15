@@ -1,51 +1,62 @@
 import { NavLink, Outlet, useLocation, Navigate } from "react-router-dom";
-import { User, Package, Settings, CreditCard, MapPin } from "lucide-react";
+import { User, Package, Tag, CreditCard, MapPin } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 
+/**
+ * AccountLayout Component
+ * Central hub for user-authenticated pages. 
+ * Features a high-contrast sidebar with improved header visibility.
+ */
 const AccountLayout = () => {
     const { isDark } = useTheme();
     const location = useLocation();
 
+    // Check for secure authentication token
     const isAuthenticated = !!localStorage.getItem("token");
 
-    // REFINED NAVIGATION: Only functional routes are included to prevent 404s
+    // Navigation configuration
     const navSections = [
         {
             title: "My Account",
             links: [
                 { name: "Account Overview", path: "/account", icon: User, end: true },
                 { name: "Orders", path: "/orders", icon: Package },
+                { name: "Voucher", path: "/account/voucher", icon: Tag },
             ]
         },
         {
             title: "Settings",
             links: [
-                { name: "Account Management", path: "/account/management", icon: Settings },
                 { name: "Payment Settings", path: "/account/payments", icon: CreditCard },
                 { name: "Address Book", path: "/account/address", icon: MapPin },
             ]
         }
     ];
 
+    // GUARD: Redirect unauthorized sessions
     if (!isAuthenticated) {
         return <Navigate to="/login" replace state={{ from: location }} />;
     }
 
     return (
         <div className="flex flex-col md:flex-row gap-8 min-h-screen">
-            {/* SIDEBAR: Standardized to match the new high-contrast dark mode */}
-            <aside className={`w-full md:w-64 shrink-0 rounded-[2rem] p-6 h-fit sticky top-24 transition-all duration-500
+            
+            {/* SIDEBAR - Fixed Header Visibility & Spacing */}
+            <aside className={`w-full md:w-64 shrink-0 rounded-[2.5rem] p-7 h-fit sticky top-28 transition-all duration-500
                 ${isDark 
-                    ? 'bg-[#111827] border border-white/5 shadow-2xl shadow-black/20' 
+                    ? 'bg-[#111827] border border-white/5 shadow-2xl shadow-black/40' 
                     : 'bg-white border border-gray-100 shadow-sm'}`}>
                 
                 {navSections.map((section, idx) => (
-                    <div key={idx} className={idx !== 0 ? "mt-10" : ""}>
-                        <h3 className={`text-[10px] font-black uppercase tracking-[0.25em] mb-5 
-                            ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
+                    <div key={idx} className={idx !== 0 ? "mt-12" : "mt-2"}>
+                        
+                        {/* 🎯 FIXED: Increased visibility for 'MY ACCOUNT' and 'SETTINGS' */}
+                        <h3 className={`text-[10px] font-black uppercase tracking-[0.3em] mb-6 px-2
+                            ${isDark ? 'text-cyan-500/90' : 'text-gray-400'}`}>
                             {section.title}
                         </h3>
-                        <nav className="flex flex-col gap-1.5">
+                        
+                        <nav className="flex flex-col gap-2">
                             {section.links.map((link) => {
                                 const Icon = link.icon;
                                 const isActive = link.end 
@@ -56,14 +67,14 @@ const AccountLayout = () => {
                                     <NavLink
                                         key={link.name}
                                         to={link.path}
-                                        className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[13px] transition-all duration-300
+                                        className={`flex items-center gap-3 px-5 py-4 rounded-2xl text-[13px] transition-all duration-300
                                             ${isActive 
                                                 ? (isDark ? 'bg-cyan-500/10 text-cyan-400 font-black' : 'bg-cyan-50 text-cyan-700 font-black') 
-                                                : (isDark ? 'text-gray-400 hover:bg-white/5 hover:text-white' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900')
+                                                : (isDark ? 'text-[#9ca3af] hover:bg-white/5 hover:text-white' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900')
                                             }`}
                                     >
                                         <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-                                        <span className="tracking-tight">{link.name}</span>
+                                        <span className="tracking-tight font-bold">{link.name}</span>
                                     </NavLink>
                                 );
                             })}
@@ -73,7 +84,7 @@ const AccountLayout = () => {
             </aside>
 
             {/* MAIN CONTENT AREA */}
-            <div className="flex-1 animate-in fade-in duration-700">
+            <div className="flex-1 min-h-[500px] animate-in fade-in slide-in-from-bottom-2 duration-700">
                 <Outlet />
             </div>
         </div>
