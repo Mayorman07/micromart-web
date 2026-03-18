@@ -13,10 +13,9 @@ const Dashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Simulating a brief session check to ensure UI smoothness
         const token = localStorage.getItem("token");
         
-        // In production, you would validate the JWT with the Spring Boot /validate endpoint here
+        // In production, validate the JWT with the Spring Boot /validate endpoint here
         const timer = setTimeout(() => {
             setIsLoading(false);
         }, 600);
