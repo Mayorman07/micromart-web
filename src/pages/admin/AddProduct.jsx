@@ -11,7 +11,8 @@ const categoryMap = [
     { id: 3, name: "Drones" },
     { id: 1, name: "Eyewear" },
     { id: 4, name: "Anime Collectibles" },
-    { id: 5, name: "Pokemon" }
+    { id: 5, name: "Pokemon" },
+    { id: 6, name: "Pens" }
 ];
 
 /**

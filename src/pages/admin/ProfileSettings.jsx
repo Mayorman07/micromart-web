@@ -1,119 +1,182 @@
 import { useState, useEffect } from "react";
-import api from "../../services/api"; // Centralized API instance replaces standard axios
+import api from "../../services/api";
+import { useToast } from "../../contexts/ToastContext";
+import { Loader2, ShieldCheck, MapPin, User as UserIcon } from "lucide-react";
 
 /**
  * ProfileSettings Component
- * Manages administrative user details and account security preferences.
- * Interfaces with the Spring Boot user service via the centralized security interceptor.
+ * Manages user identity and logistics (address) registry.
+ * Implements payload sanitization to handle optional password updates
+ * without triggering backend @Size validation constraints.
  */
 const ProfileSettings = () => {
-    const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "" });
+    const { showToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
+    const [loading, setLoading] = useState(true);
 
+    // Initial state matching the UpdateUserRequest DTO structure
+    const [formData, setFormData] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        mobileNumber: "",
+        gender: "",
+        password: "", 
+        address: {
+            street: "",
+            city: "",
+            state: "",
+            country: "",
+            zipCode: ""
+        }
+    });
+
+    /**
+     * Effect: Retrieve current user profile from the centralized service.
+     */
     useEffect(() => {
-        /**
-         * Fetches current administrator profile data on component mount.
-         * Authorization headers are handled automatically by the api instance.
-         */
         const fetchProfile = async () => {
             try {
-                const adminEmail = "mayowa.hyde@gmail.com"; 
-                const response = await api.get(`/users/users/view/${adminEmail}`);
-                setFormData(response.data);
+                const userEmail = localStorage.getItem("userEmail") || "mayowa.hyde@gmail.com";
+                const response = await api.get(`/users/users/view/${userEmail}`);
+                const data = response.data;
+                
+                // Initialize form with fetched data; handle null address gracefully
+                setFormData({
+                    ...data,
+                    password: "", 
+                    address: data.address || { street: "", city: "", state: "", country: "", zipCode: "" }
+                });
             } catch (error) {
-                console.error("Profile Fetch Error: Access to administrative dossier interrupted.", error);
+                showToast("Failed to load profile from registry", "error");
+            } finally {
+                setLoading(false);
             }
         };
         fetchProfile();
-    }, []);
+    }, [showToast]);
 
     /**
-     * Handles the update request for user profile information.
-     * Persists changes to the backend via PutMapping(path ="/update").
+     * Logic: Persist changes to the user registry.
+     * Sanitizes the payload to remove empty strings from sensitive fields
+     * to avoid triggering @Size validation errors on the Spring Boot backend.
      */
     const handleUpdate = async (e) => {
         e.preventDefault();
         setIsSaving(true);
+
+        // Create sanitized payload clone
+        const payload = { ...formData };
+
+        // Logic: Remove password key if empty to avoid @Size [3-12] violation
+        if (!payload.password || payload.password.trim() === "") {
+            delete payload.password;
+        }
+
         try {
-            /** * Targets the Spring Boot users/update endpoint.
-             * The interceptor manages JWT rotation if the session expires during submission.
-             */
-            await api.put(`/users/users/update`, formData);
-            alert("Profile updated successfully.");
+            // FIX: Ensure 'payload' is sent, not the raw 'formData'
+            await api.put(`/users/users/update`, payload);
+            showToast("Profile and Shipping Registry updated successfully", "success");
         } catch (err) {
-            console.error("Update Error:", err);
-            // Standardizing error extraction from the backend response
-            alert(err.response?.data?.message || "Failed to update profile. Please check your connection.");
-        } finally { 
-            setIsSaving(false); 
+            // Standardized error extraction
+            const errorMessage = err.response?.data?.message || "Registry update rejected";
+            showToast(errorMessage, "error");
+        } finally {
+            setIsSaving(false);
         }
     };
 
-    const inputStyle = "w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white focus:border-cyan-500 outline-none transition-all";
+    const inputStyle = "w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-white/20";
     const labelStyle = "text-[10px] font-bold text-slate-500 uppercase tracking-widest";
 
-    return (
-        <div className="animate-in fade-in duration-500 space-y-8">
-            <h1 className="text-3xl font-black text-white tracking-tight uppercase">Account Settings</h1>
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="animate-spin text-cyan-500" size={32} />
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Accessing Registry...</p>
+        </div>
+    );
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* User Information Form */}
-                <div className="md:col-span-2 bg-[#161b2c] border border-white/5 rounded-[2.5rem] p-10 shadow-2xl">
-                    <form onSubmit={handleUpdate} className="space-y-6">
-                        <div className="grid grid-cols-2 gap-6">
+    return (
+        <div className="animate-in fade-in duration-500 space-y-8 pb-20">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Account Settings</h1>
+                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Registry Synchronization</p>
+                </div>
+                <button 
+                    onClick={handleUpdate}
+                    disabled={isSaving}
+                    className="px-10 py-4 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-[10px] font-black tracking-widest rounded-2xl transition-all shadow-xl shadow-cyan-900/20 uppercase"
+                >
+                    {isSaving ? "Synchronizing..." : "Save Changes"}
+                </button>
+            </header>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                    {/* IDENTITY DATA SECTION */}
+                    <section className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] p-10 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-8">
+                            <UserIcon className="text-cyan-500" size={18} />
+                            <h3 className="text-white font-bold uppercase text-xs tracking-widest">Personal Identification</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className={labelStyle}>First Name</label>
-                                <input 
-                                    className={inputStyle}
-                                    value={formData.firstName}
-                                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                                    required
-                                />
+                                <input className={inputStyle} value={formData.firstName} onChange={(e) => setFormData({...formData, firstName: e.target.value})} />
                             </div>
                             <div className="space-y-2">
                                 <label className={labelStyle}>Last Name</label>
-                                <input 
-                                    className={inputStyle}
-                                    value={formData.lastName}
-                                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                                    required
-                                />
+                                <input className={inputStyle} value={formData.lastName} onChange={(e) => setFormData({...formData, lastName: e.target.value})} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className={labelStyle}>Mobile Number</label>
+                                <input className={inputStyle} value={formData.mobileNumber} onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})} />
+                            </div>
+                            <div className="space-y-2">
+                                <label className={labelStyle}>New Password (Optional)</label>
+                                <input type="password" placeholder="Leave blank to keep current" className={inputStyle} value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className={labelStyle}>Email Address</label>
-                            <input 
-                                disabled
-                                className="w-full bg-black/20 border border-white/5 rounded-2xl p-4 text-slate-500 cursor-not-allowed font-mono text-sm"
-                                value={formData.email}
-                            />
+                    </section>
+
+                    {/* ADDRESS DATA SECTION */}
+                    <section className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] p-10 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-8">
+                            <MapPin className="text-cyan-500" size={18} />
+                            <h3 className="text-white font-bold uppercase text-xs tracking-widest">Address</h3>
                         </div>
-                        <button 
-                            type="submit"
-                            disabled={isSaving}
-                            className="px-10 py-4 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-[10px] font-black tracking-widest rounded-2xl transition-all shadow-lg shadow-cyan-900/20 uppercase"
-                        >
-                            {isSaving ? "Saving..." : "Save Changes"}
-                        </button>
-                    </form>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className={labelStyle}>Street Address</label>
+                                <input className={inputStyle} value={formData.address.street} onChange={(e) => setFormData({...formData, address: {...formData.address, street: e.target.value}})} />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="space-y-2">
+                                    <label className={labelStyle}>City</label>
+                                    <input className={inputStyle} value={formData.address.city} onChange={(e) => setFormData({...formData, address: {...formData.address, city: e.target.value}})} />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className={labelStyle}>State</label>
+                                    <input className={inputStyle} value={formData.address.state} onChange={(e) => setFormData({...formData, address: {...formData.address, state: e.target.value}})} />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className={labelStyle}>Zip Code</label>
+                                    <input className={inputStyle} value={formData.address.zipCode} onChange={(e) => setFormData({...formData, address: {...formData.address, zipCode: e.target.value}})} />
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
-                {/* Account Security Information */}
-                <div className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] p-8 flex flex-col justify-between">
-                    <div>
-                        <h3 className="text-white font-bold mb-4">Security Profile</h3>
-                        <p className="text-slate-500 text-xs leading-relaxed">
-                            Your account is secured with JWT-based session persistence and automated token rotation.
+                {/* SECURITY STATUS PANEL */}
+                <div className="space-y-6">
+                    <div className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] p-8">
+                        <ShieldCheck className="text-cyan-500 mb-4" size={32} />
+                        <h3 className="text-white font-bold mb-2 uppercase text-xs tracking-widest">Security Protocol</h3>
+                        <p className="text-slate-500 text-[11px] leading-relaxed">
+                            Partial registry updates are active. Sensitive credentials are only transmitted during intentional password rotation to ensure maximum data integrity.
                         </p>
-                    </div>
-                    <div className="pt-6 border-t border-white/5 mt-6">
-                        <div className="flex justify-between text-[10px] mb-4">
-                            <span className="text-slate-500 uppercase font-bold tracking-widest">Account Status</span>
-                            <span className="text-cyan-500 font-black uppercase">Verified</span>
-                        </div>
-                        <button className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-white text-[10px] font-bold uppercase tracking-widest transition-all">
-                            Reset Password
-                        </button>
                     </div>
                 </div>
             </div>

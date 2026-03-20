@@ -19,6 +19,7 @@ const AccountLayout = () => {
         {
             title: "Settings",
             links: [
+                { name: "Profile Settings", path: "/account/settings", icon: User },
                 { name: "Payment Settings", path: "/account/payments", icon: CreditCard },
             ]
         }

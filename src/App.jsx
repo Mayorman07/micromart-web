@@ -77,6 +77,7 @@ function App() {
                 <Route element={<AccountLayout />}>
                     <Route path="/account" element={<AccountOverview />} />
                     <Route path="/orders" element={<Orders />} />
+                    <Route path="/account/settings" element={<ProfileSettings />} />
                     
                     <Route path="/account/voucher" element={<Voucher />} />
                     <Route path="/account/payments" element={<ComingSoon title="Payment Settings" />} />
