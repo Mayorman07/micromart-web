@@ -1,18 +1,24 @@
 import { useState, useEffect, useMemo } from "react";
 import api from "../../services/api";
 import { useToast } from "../../contexts/ToastContext";
-import { Loader2, ShieldCheck, MapPin, User as UserIcon, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { useTheme } from "../../contexts/ThemeContext";
+import { 
+    Loader2, ShieldCheck, MapPin, User as UserIcon, 
+    Eye, EyeOff, AlertCircle, Lock 
+} from "lucide-react";
 
 /**
  * ProfileSettings Component
- * Comprehensive user registry management with pre-flight validation.
+ * Advanced user registry management with adaptive Light/Dark UI.
+ * Features: Payload sanitization, strength metering, and pre-flight validation.
  */
 const ProfileSettings = () => {
     const { showToast } = useToast();
+    const { isDark } = useTheme();
     const [isSaving, setIsSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
-    const [errors, setErrors] = useState({}); // 🎯 Tracks validation states
+    const [errors, setErrors] = useState({});
 
     const [formData, setFormData] = useState({
         firstName: "",
@@ -30,25 +36,38 @@ const ProfileSettings = () => {
         }
     });
 
+    // Dynamic Style Logic
+    const sectionClass = `border rounded-[2.5rem] p-10 transition-all duration-500 ${
+        isDark ? 'bg-[#161b2c] border-white/5 shadow-2xl' : 'bg-white border-gray-100 shadow-sm'
+    }`;
+
+    const inputBase = `w-full border rounded-2xl p-4 transition-all outline-none ${
+        isDark 
+        ? 'bg-black/40 border-white/10 text-white focus:border-cyan-500 placeholder:text-white/10' 
+        : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-600 focus:bg-white placeholder:text-gray-300'
+    }`;
+
+    const labelStyle = `text-[10px] font-bold uppercase tracking-widest ${
+        isDark ? 'text-slate-500' : 'text-gray-400'
+    }`;
+
+    const titleStyle = `text-3xl font-black tracking-tight uppercase italic ${
+        isDark ? 'text-white' : 'text-gray-900'
+    }`;
+
     /**
      * Logic: Pre-flight Validation
-     * Matches the constraints defined in the Spring Boot DTOs.
      */
     const validateForm = () => {
         const newErrors = {};
-        
-        if (formData.firstName.length < 2) newErrors.firstName = "Minimum 2 characters required";
-        if (formData.lastName.length < 2) newErrors.lastName = "Minimum 2 characters required";
-        
-        // Only validate password length if the user actually typed something
+        if (formData.firstName.length < 2) newErrors.firstName = "Minimum 2 characters";
+        if (formData.lastName.length < 2) newErrors.lastName = "Minimum 2 characters";
         if (formData.password.length > 0 && (formData.password.length < 3 || formData.password.length > 12)) {
-            newErrors.password = "Must be between 3 and 12 characters";
+            newErrors.password = "Range: 3-12 characters";
         }
-
         if (formData.mobileNumber.length < 11 || formData.mobileNumber.length > 15) {
             newErrors.mobileNumber = "Requires 11-15 digits";
         }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -94,10 +113,8 @@ const ProfileSettings = () => {
 
     const handleUpdate = async (e) => {
         e.preventDefault();
-        
-        // 🎯 Run validation before attempting API call
         if (!validateForm()) {
-            showToast("Registry update blocked: check field constraints", "error");
+            showToast("Update blocked: field validation failed", "error");
             return;
         }
 
@@ -109,9 +126,9 @@ const ProfileSettings = () => {
 
         try {
             await api.put(`/users/users/update`, payload);
-            showToast("Profile successfully synchronized", "success");
+            showToast("Registry synchronized successfully", "success");
             setShowPassword(false);
-            setErrors({}); // Clear errors on success
+            setErrors({});
         } catch (err) {
             showToast(err.response?.data?.message || "Registry update rejected", "error");
         } finally {
@@ -119,29 +136,26 @@ const ProfileSettings = () => {
         }
     };
 
-    const inputBase = "w-full bg-black/40 border rounded-2xl p-4 text-white focus:border-cyan-500 outline-none transition-all placeholder:text-white/10";
-    const labelStyle = "text-[10px] font-bold text-slate-500 uppercase tracking-widest";
-    
-    // Helper to render error message
-    const ErrorLabel = ({ field }) => errors[field] ? (
-        <span className="text-[9px] text-red-500 font-bold flex items-center gap-1 mt-1 animate-in fade-in slide-in-from-left-1">
-            <AlertCircle size={10} /> {errors[field]}
-        </span>
-    ) : null;
-
-    if (loading) return <div className="flex flex-col items-center justify-center py-20 gap-4"><Loader2 className="animate-spin text-cyan-500" size={32} /></div>;
+    if (loading) return (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className={`animate-spin ${isDark ? 'text-cyan-500' : 'text-cyan-600'}`} size={32} />
+        </div>
+    );
 
     return (
         <div className="animate-in fade-in duration-500 space-y-8 pb-20">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-black text-white tracking-tight uppercase italic">Account Settings</h1>
-                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Registry Synchronization</p>
+                    <h1 className={titleStyle}>Account Settings</h1>
+                    <p className={`${isDark ? 'text-slate-500' : 'text-gray-400'} text-[10px] font-bold uppercase tracking-widest mt-1`}>
+                        Registry Synchronization
+                    </p>
                 </div>
                 <button 
                     onClick={handleUpdate}
                     disabled={isSaving}
-                    className="px-10 py-4 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-[10px] font-black tracking-widest rounded-2xl transition-all shadow-xl uppercase"
+                    className={`px-10 py-4 text-white text-[10px] font-black tracking-widest rounded-2xl transition-all shadow-xl uppercase 
+                        ${isDark ? 'bg-cyan-600 hover:bg-cyan-500 shadow-cyan-900/20' : 'bg-cyan-600 hover:bg-cyan-700 shadow-cyan-200'}`}
                 >
                     {isSaving ? "Synchronizing..." : "Save Changes"}
                 </button>
@@ -151,76 +165,78 @@ const ProfileSettings = () => {
                 <div className="lg:col-span-2 space-y-8">
                     
                     {/* IDENTITY DATA */}
-                    <section className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] p-10 shadow-2xl">
+                    <section className={sectionClass}>
                         <div className="flex items-center gap-3 mb-8">
-                            <UserIcon className="text-cyan-500" size={18} />
-                            <h3 className="text-white font-bold uppercase text-xs tracking-widest">Personal Identification</h3>
+                            <UserIcon className={isDark ? "text-cyan-500" : "text-cyan-600"} size={18} />
+                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-bold uppercase text-xs tracking-widest`}>
+                                Personal Identification
+                            </h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className={labelStyle}>First Name</label>
                                 <input 
-                                    className={`${inputBase} ${errors.firstName ? 'border-red-500/50' : 'border-white/10'}`} 
+                                    className={`${inputBase} ${errors.firstName ? 'border-red-500' : ''}`} 
                                     value={formData.firstName} 
                                     onChange={(e) => setFormData({...formData, firstName: e.target.value})} 
                                 />
-                                <ErrorLabel field="firstName" />
+                                {errors.firstName && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{errors.firstName}</span>}
                             </div>
                             <div className="space-y-2">
                                 <label className={labelStyle}>Last Name</label>
                                 <input 
-                                    className={`${inputBase} ${errors.lastName ? 'border-red-500/50' : 'border-white/10'}`} 
+                                    className={`${inputBase} ${errors.lastName ? 'border-red-500' : ''}`} 
                                     value={formData.lastName} 
                                     onChange={(e) => setFormData({...formData, lastName: e.target.value})} 
                                 />
-                                <ErrorLabel field="lastName" />
+                                {errors.lastName && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{errors.lastName}</span>}
                             </div>
                             <div className="space-y-2">
                                 <label className={labelStyle}>Mobile Connection</label>
                                 <input 
-                                    className={`${inputBase} ${errors.mobileNumber ? 'border-red-500/50' : 'border-white/10'}`} 
+                                    className={`${inputBase} ${errors.mobileNumber ? 'border-red-500' : ''}`} 
                                     value={formData.mobileNumber} 
                                     onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})} 
                                 />
-                                <ErrorLabel field="mobileNumber" />
+                                {errors.mobileNumber && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{errors.mobileNumber}</span>}
                             </div>
                             
                             <div className="space-y-2">
-                                <label className={labelStyle}>New Password (3-12 characters)</label>
-                                <div className="relative group">
+                                <label className={labelStyle}>New Password (Optional)</label>
+                                <div className="relative">
                                     <input 
                                         type={showPassword ? "text" : "password"} 
-                                        className={`${inputBase} pr-12 ${errors.password ? 'border-red-500/50' : 'border-white/10'}`} 
+                                        className={`${inputBase} pr-12 ${errors.password ? 'border-red-500' : ''}`} 
                                         value={formData.password} 
                                         onChange={(e) => setFormData({...formData, password: e.target.value})} 
                                     />
                                     <button 
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-cyan-500"
+                                        className={`absolute right-4 top-1/2 -translate-y-1/2 transition-colors ${isDark ? 'text-slate-500 hover:text-cyan-500' : 'text-gray-300 hover:text-cyan-600'}`}
                                     >
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-                                <ErrorLabel field="password" />
+                                {errors.password && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{errors.password}</span>}
                                 {formData.password.length > 0 && (
-                                    <div className="px-1 pt-2 animate-in fade-in duration-300">
-                                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden flex gap-1">
-                                            {[1, 2, 3, 4].map((step) => (
-                                                <div key={step} className={`h-full flex-1 transition-all duration-700 ${step <= passwordStrength.score ? passwordStrength.color : 'bg-white/5'}`} />
-                                            ))}
-                                        </div>
+                                    <div className="h-1 w-full bg-black/10 dark:bg-white/5 rounded-full overflow-hidden flex gap-1 mt-2">
+                                        {[1, 2, 3, 4].map((step) => (
+                                            <div key={step} className={`h-full flex-1 transition-all duration-700 ${step <= passwordStrength.score ? passwordStrength.color : 'opacity-20'}`} />
+                                        ))}
                                     </div>
                                 )}
                             </div>
                         </div>
                     </section>
 
-                    {/* ADDRESS REGISTRY */}
-                    <section className="bg-[#161b2c] border border-white/5 rounded-[2.5rem] p-10 shadow-2xl">
+                    {/* LOGISTICS REGISTRY */}
+                    <section className={sectionClass}>
                         <div className="flex items-center gap-3 mb-8">
-                            <MapPin className="text-cyan-500" size={18} />
-                            <h3 className="text-white font-bold uppercase text-xs tracking-widest">Logistics Registry</h3>
+                            <MapPin className={isDark ? "text-cyan-500" : "text-cyan-600"} size={18} />
+                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-bold uppercase text-xs tracking-widest`}>
+                                Logistics Registry
+                            </h3>
                         </div>
                         <div className="space-y-6">
                             <div className="space-y-2">
@@ -237,10 +253,12 @@ const ProfileSettings = () => {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="bg-slate-900/50 border border-white/5 rounded-[2.5rem] p-8">
-                        <ShieldCheck className="text-cyan-500 mb-4" size={32} />
-                        <h3 className="text-white font-bold mb-2 uppercase text-xs tracking-widest">Protocol Matrix</h3>
-                        <p className="text-slate-500 text-[11px] leading-relaxed"> Registry synchronization is guarded by layer-7 encryption and local validation checks to prevent identity conflicts. </p>
+                    <div className={`${isDark ? 'bg-slate-900/50 border-white/5' : 'bg-gray-50 border-gray-100'} border rounded-[2.5rem] p-8`}>
+                        <ShieldCheck className={isDark ? "text-cyan-500" : "text-cyan-600"} size={32} />
+                        <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-bold mb-2 uppercase text-xs tracking-widest mt-4`}>Security Protocol</h3>
+                        <p className={`${isDark ? 'text-slate-500' : 'text-gray-500'} text-[11px] leading-relaxed`}>
+                            Administrative synchronization is active. All identity updates are propagated via secure relay.
+                        </p>
                     </div>
                 </div>
             </div>

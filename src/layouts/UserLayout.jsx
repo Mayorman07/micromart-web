@@ -5,6 +5,11 @@ import CartDrawer from "../components/CartDrawer";
 import { useTheme } from "../contexts/ThemeContext";
 import api from "../../src/services/api";
 
+/**
+ * UserLayout Component
+ * Serves as the primary wrapper for authenticated and public store views.
+ * Manages global cart state and search term broadcasting via Outlet Context.
+ */
 const UserLayout = () => {
     const { isDark } = useTheme();
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -14,13 +19,16 @@ const UserLayout = () => {
     
     const isAuthenticated = !!localStorage.getItem("token");
 
+    /**
+     * Synchronizes local cart state with the backend registry.
+     */
     const fetchCart = useCallback(async () => {
         if (!isAuthenticated) return;
         try {
             const response = await api.get("/cart/api/cart");
             setCartItems(response.data.items || []);
         } catch (err) {
-            console.error("Registry Sync Error:", err);
+            console.error("Registry Sync Error: Cart retrieval failed.", err);
         } finally {
             setLoading(false);
         }
@@ -47,7 +55,7 @@ const UserLayout = () => {
             await api.delete(`/cart/api/cart/remove/${skuCode}`);
             setCartItems(prev => prev.filter(item => item.skuCode !== skuCode));
         } catch (err) {
-            console.error("Failed to purge asset:", err);
+            console.error("Failed to purge asset from registry:", err);
         }
     };
 
@@ -56,7 +64,7 @@ const UserLayout = () => {
             await api.delete("/cart/api/cart/clear");
             setCartItems([]);
         } catch (err) {
-            console.error("Failed to clear registry:", err);
+            console.error("Failed to clear registry deployment:", err);
         }
     };
 
@@ -80,10 +88,11 @@ const UserLayout = () => {
                 isAuthenticated={isAuthenticated} 
             />
 
-            {/* 🎯 ADJUSTED: Increased pt-32 to pt-52 to clear the tall triple-decker navbar */}
-            <main className="flex-1 pt-52 pb-20 px-4 md:px-12 lg:px-16">
+            {/* Adjusted padding-top to ensure content clears the fixed navigation sector */}
+            <main className="flex-1 pt-64 pb-20 px-4 md:px-12 lg:px-16 transition-all">
                 <div className="max-w-7xl mx-auto">
-                    <Outlet context={{ setIsCartOpen, setSearchTerm, fetchCart, isAuthenticated }} /> 
+                    {/* Broadcasting searchTerm and fetchCart via context for child components */}
+                    <Outlet context={{ setIsCartOpen, searchTerm, setSearchTerm, fetchCart, isAuthenticated }} /> 
                 </div>
             </main>
 
