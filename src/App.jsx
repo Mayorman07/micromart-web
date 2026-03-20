@@ -16,10 +16,11 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 
 // STOREFRONT & USER DASHBOARD VIEWS
 import ProductGallery from "./pages/Dashboard/ProductGallery";
+import ProductDetail from "./pages/Dashboard/ProductDetail";
 import Offers from "./pages/views/Offers"; 
 import Orders from "./pages/Dashboard/Orders"; 
 import AccountOverview from "./pages/Dashboard/AccountOverview"; 
-import Voucher from "./pages/Account/Voucher"; // 🎯 New Voucher Module
+import Voucher from "./pages/Account/Voucher"; 
 import ComingSoon from "./pages/General/ComingSoon"; 
 import OrderTracking from "./pages/Dashboard/OrderTracking"; 
 import Checkout from "./pages/General/Checkout"; 
@@ -57,6 +58,10 @@ function App() {
                 
                 <Route path="/" element={<ProductGallery />} />
                 <Route path="/marketplace" element={<Navigate to="/" replace />} />
+                
+                {/* 🎯 Dynamic route for Product Details using SKU Code */}
+                <Route path="/product/:skuCode" element={<ProductDetail />} />
+                
                 <Route path="/offers" element={<Offers />} />
                 
                 {/* 💳 Payment & Tracking Routes */}
@@ -73,7 +78,6 @@ function App() {
                     <Route path="/account" element={<AccountOverview />} />
                     <Route path="/orders" element={<Orders />} />
                     
-                    {/* 🎯 New functional and upcoming routes */}
                     <Route path="/account/voucher" element={<Voucher />} />
                     <Route path="/account/payments" element={<ComingSoon title="Payment Settings" />} />
                     <Route path="/account/address" element={<ComingSoon title="Address Registry" />} />
