@@ -4,12 +4,12 @@ import { useToast } from "../../contexts/ToastContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { 
     Loader2, ShieldCheck, MapPin, User as UserIcon, 
-    Eye, EyeOff, AlertCircle, Lock 
+    Eye, EyeOff, AlertCircle, Lock, ChevronDown 
 } from "lucide-react";
 
 /**
  * ProfileSettings Component
- * Advanced user registry management with adaptive Light/Dark UI.
+ * Comprehensive user registry management with adaptive UI.
  * Features: Payload sanitization, strength metering, and pre-flight validation.
  */
 const ProfileSettings = () => {
@@ -20,6 +20,7 @@ const ProfileSettings = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
 
+    // Master state for UpdateUserRequest DTO
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -36,7 +37,10 @@ const ProfileSettings = () => {
         }
     });
 
-    // Dynamic Style Logic
+    /**
+     * Logic: Dynamic UI Styling
+     * Switches classes based on isDark context for a native experience.
+     */
     const sectionClass = `border rounded-[2.5rem] p-10 transition-all duration-500 ${
         isDark ? 'bg-[#161b2c] border-white/5 shadow-2xl' : 'bg-white border-gray-100 shadow-sm'
     }`;
@@ -47,34 +51,18 @@ const ProfileSettings = () => {
         : 'bg-gray-50 border-gray-200 text-gray-900 focus:border-cyan-600 focus:bg-white placeholder:text-gray-300'
     }`;
 
-    const labelStyle = `text-[10px] font-bold uppercase tracking-widest ${
+    const labelStyle = `text-[10px] font-black uppercase tracking-[0.2em] ${
         isDark ? 'text-slate-500' : 'text-gray-400'
     }`;
 
-    const titleStyle = `text-3xl font-black tracking-tight uppercase italic ${
-        isDark ? 'text-white' : 'text-gray-900'
-    }`;
-
     /**
-     * Logic: Pre-flight Validation
+     * Logic: Password Strength Calculation
+     * 1-4 scale mirroring the Signup registry security.
      */
-    const validateForm = () => {
-        const newErrors = {};
-        if (formData.firstName.length < 2) newErrors.firstName = "Minimum 2 characters";
-        if (formData.lastName.length < 2) newErrors.lastName = "Minimum 2 characters";
-        if (formData.password.length > 0 && (formData.password.length < 3 || formData.password.length > 12)) {
-            newErrors.password = "Range: 3-12 characters";
-        }
-        if (formData.mobileNumber.length < 11 || formData.mobileNumber.length > 15) {
-            newErrors.mobileNumber = "Requires 11-15 digits";
-        }
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
     const passwordStrength = useMemo(() => {
         const pw = formData.password;
         if (!pw) return { score: 0, label: "Neutral", color: "bg-white/5" };
+        
         let score = 0;
         if (pw.length >= 3) score += 1;
         if (pw.length >= 8) score += 1;
@@ -84,12 +72,35 @@ const ProfileSettings = () => {
         const levels = [
             { score: 0, label: "Invalid", color: "bg-red-500/20" },
             { score: 1, label: "Weak", color: "bg-red-500" },
-            { score: 2, label: "Fair", color: "bg-yellow-500" },
+            { score: 2, label: "Medium", color: "bg-yellow-500" },
             { score: 3, label: "Strong", color: "bg-emerald-500" },
             { score: 4, label: "Elite", color: "bg-cyan-500" },
         ];
+        
         return levels[score];
     }, [formData.password]);
+
+    /**
+     * Logic: Pre-flight Validation
+     * Synchronized with Spring Boot @Size constraints.
+     */
+    const validateForm = () => {
+        const newErrors = {};
+        if (formData.firstName.length < 2) newErrors.firstName = "Minimum 2 characters";
+        if (formData.lastName.length < 2) newErrors.lastName = "Minimum 2 characters";
+        
+        // Optional password validation (only if field is not empty)
+        if (formData.password.length > 0 && (formData.password.length < 3 || formData.password.length > 12)) {
+            newErrors.password = "Range: 3-12 characters";
+        }
+        
+        if (formData.mobileNumber.length < 11 || formData.mobileNumber.length > 15) {
+            newErrors.mobileNumber = "Requires 11-15 digits";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -97,6 +108,7 @@ const ProfileSettings = () => {
                 const userEmail = localStorage.getItem("userEmail") || "mayowa.hyde@gmail.com";
                 const response = await api.get(`/users/users/view/${userEmail}`);
                 const data = response.data;
+                
                 setFormData({
                     ...data,
                     password: "", 
@@ -113,13 +125,16 @@ const ProfileSettings = () => {
 
     const handleUpdate = async (e) => {
         e.preventDefault();
+        
         if (!validateForm()) {
-            showToast("Update blocked: field validation failed", "error");
+            showToast("Update blocked: validation failure", "error");
             return;
         }
 
         setIsSaving(true);
         const payload = { ...formData };
+
+        // Sanitization: Remove empty password to bypass backend @Size constraint
         if (!payload.password || payload.password.trim() === "") {
             delete payload.password;
         }
@@ -127,8 +142,8 @@ const ProfileSettings = () => {
         try {
             await api.put(`/users/users/update`, payload);
             showToast("Registry synchronized successfully", "success");
-            setShowPassword(false);
             setErrors({});
+            setShowPassword(false);
         } catch (err) {
             showToast(err.response?.data?.message || "Registry update rejected", "error");
         } finally {
@@ -139,6 +154,7 @@ const ProfileSettings = () => {
     if (loading) return (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
             <Loader2 className={`animate-spin ${isDark ? 'text-cyan-500' : 'text-cyan-600'}`} size={32} />
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 italic">Decrypting Registry...</p>
         </div>
     );
 
@@ -146,9 +162,11 @@ const ProfileSettings = () => {
         <div className="animate-in fade-in duration-500 space-y-8 pb-20">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className={titleStyle}>Account Settings</h1>
+                    <h1 className={`text-4xl font-black uppercase tracking-tighter italic ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        Account Settings
+                    </h1>
                     <p className={`${isDark ? 'text-slate-500' : 'text-gray-400'} text-[10px] font-bold uppercase tracking-widest mt-1`}>
-                        Registry Synchronization
+                        Registry Synchronization Mode
                     </p>
                 </div>
                 <button 
@@ -164,11 +182,11 @@ const ProfileSettings = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                     
-                    {/* IDENTITY DATA */}
+                    {/* PERSONAL IDENTIFICATION */}
                     <section className={sectionClass}>
                         <div className="flex items-center gap-3 mb-8">
                             <UserIcon className={isDark ? "text-cyan-500" : "text-cyan-600"} size={18} />
-                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-bold uppercase text-xs tracking-widest`}>
+                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-black uppercase text-xs tracking-[0.2em]`}>
                                 Personal Identification
                             </h3>
                         </div>
@@ -180,7 +198,7 @@ const ProfileSettings = () => {
                                     value={formData.firstName} 
                                     onChange={(e) => setFormData({...formData, firstName: e.target.value})} 
                                 />
-                                {errors.firstName && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{errors.firstName}</span>}
+                                {errors.firstName && <span className="text-[9px] text-red-500 font-bold uppercase">{errors.firstName}</span>}
                             </div>
                             <div className="space-y-2">
                                 <label className={labelStyle}>Last Name</label>
@@ -189,7 +207,7 @@ const ProfileSettings = () => {
                                     value={formData.lastName} 
                                     onChange={(e) => setFormData({...formData, lastName: e.target.value})} 
                                 />
-                                {errors.lastName && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{errors.lastName}</span>}
+                                {errors.lastName && <span className="text-[9px] text-red-500 font-bold uppercase">{errors.lastName}</span>}
                             </div>
                             <div className="space-y-2">
                                 <label className={labelStyle}>Mobile Connection</label>
@@ -198,14 +216,15 @@ const ProfileSettings = () => {
                                     value={formData.mobileNumber} 
                                     onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})} 
                                 />
-                                {errors.mobileNumber && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{errors.mobileNumber}</span>}
+                                {errors.mobileNumber && <span className="text-[9px] text-red-500 font-bold uppercase">{errors.mobileNumber}</span>}
                             </div>
                             
                             <div className="space-y-2">
-                                <label className={labelStyle}>New Password (Optional)</label>
+                                <label className={labelStyle}>Rotate Password (Optional)</label>
                                 <div className="relative">
                                     <input 
                                         type={showPassword ? "text" : "password"} 
+                                        placeholder="New Secret Key"
                                         className={`${inputBase} pr-12 ${errors.password ? 'border-red-500' : ''}`} 
                                         value={formData.password} 
                                         onChange={(e) => setFormData({...formData, password: e.target.value})} 
@@ -218,9 +237,9 @@ const ProfileSettings = () => {
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-                                {errors.password && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">{errors.password}</span>}
+                                {errors.password && <span className="text-[9px] text-red-500 font-bold uppercase">{errors.password}</span>}
                                 {formData.password.length > 0 && (
-                                    <div className="h-1 w-full bg-black/10 dark:bg-white/5 rounded-full overflow-hidden flex gap-1 mt-2">
+                                    <div className="h-1 w-full bg-black/10 dark:bg-white/5 rounded-full overflow-hidden flex gap-1 mt-3 transition-all">
                                         {[1, 2, 3, 4].map((step) => (
                                             <div key={step} className={`h-full flex-1 transition-all duration-700 ${step <= passwordStrength.score ? passwordStrength.color : 'opacity-20'}`} />
                                         ))}
@@ -234,8 +253,8 @@ const ProfileSettings = () => {
                     <section className={sectionClass}>
                         <div className="flex items-center gap-3 mb-8">
                             <MapPin className={isDark ? "text-cyan-500" : "text-cyan-600"} size={18} />
-                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-bold uppercase text-xs tracking-widest`}>
-                                Logistics Registry
+                            <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-black uppercase text-xs tracking-[0.2em]`}>
+                                Address
                             </h3>
                         </div>
                         <div className="space-y-6">
@@ -252,12 +271,13 @@ const ProfileSettings = () => {
                     </section>
                 </div>
 
+                {/* PROTOCOL SIDEBAR */}
                 <div className="space-y-6">
-                    <div className={`${isDark ? 'bg-slate-900/50 border-white/5' : 'bg-gray-50 border-gray-100'} border rounded-[2.5rem] p-8`}>
+                    <div className={`${isDark ? 'bg-slate-900/50 border-white/5 shadow-2xl' : 'bg-gray-50 border-gray-100 shadow-sm'} border rounded-[2.5rem] p-8 transition-all`}>
                         <ShieldCheck className={isDark ? "text-cyan-500" : "text-cyan-600"} size={32} />
-                        <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-bold mb-2 uppercase text-xs tracking-widest mt-4`}>Security Protocol</h3>
-                        <p className={`${isDark ? 'text-slate-500' : 'text-gray-500'} text-[11px] leading-relaxed`}>
-                            Administrative synchronization is active. All identity updates are propagated via secure relay.
+                        <h3 className={`${isDark ? 'text-white' : 'text-gray-900'} font-black mb-2 uppercase text-xs tracking-widest mt-4`}>Security Protocol</h3>
+                        <p className={`${isDark ? 'text-slate-500' : 'text-gray-500'} text-[11px] leading-relaxed font-medium`}>
+                            Administrative synchronization is active. All identity updates are propagated via secure relay. Password rotation requires a 3-12 character complex string.
                         </p>
                     </div>
                 </div>

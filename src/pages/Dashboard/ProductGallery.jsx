@@ -3,31 +3,39 @@ import { useOutletContext, useNavigate, useSearchParams } from "react-router-dom
 import api from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useToast } from "../../contexts/ToastContext";
-import { SearchX, Loader2, XCircle, ShoppingCart } from "lucide-react"; 
+import { SearchX, Loader2, ShoppingCart } from "lucide-react"; 
 
 /**
  * ProductGallery Component
- * Main asset registry featuring dynamic category filtering, 
- * real-time search synchronization, and adaptive light/dark UI.
+ * Primary marketplace interface for asset discovery and acquisition.
+ * Implements real-time search synchronization, category-based sector filtering, 
+ * and adaptive theme rendering.
  */
 const ProductGallery = () => {
+    /** State Management */
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState(null); 
     const [sortBy, setSortBy] = useState("featured");
     
+    /** Hooks and Contexts */
     const { isDark } = useTheme();
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [searchParams, setSearchParams] = useSearchParams();
     
-    // Access search term and setter from UserLayout context
+    /** * Contextual Data Retrieval 
+     * Pulls global search state and cart actions from the parent Layout context.
+     */
     const context = useOutletContext() || {};
     const { searchTerm, setSearchTerm, fetchCart, isAuthenticated } = context;
     
     const activeCategoryId = searchParams.get("category");
 
+    /** * Lifecycle: Initial Registry Data Sync
+     * Fetches current inventory and category definitions from the backend.
+     */
     useEffect(() => {
         let isMounted = true;
         const loadRegistryData = async () => {
@@ -45,7 +53,7 @@ const ProductGallery = () => {
                     setCategories(Array.isArray(catData) ? catData : []);
                 }
             } catch (err) {
-                if (isMounted) showToast("Sync Error: Backend Unreachable", "error");
+                if (isMounted) showToast("Sync Error: Product registry unreachable", "error");
             } finally {
                 if (isMounted) setLoading(false);
             }
@@ -55,6 +63,10 @@ const ProductGallery = () => {
         return () => { isMounted = false; };
     }, [showToast]);
 
+    /**
+     * Logistics Interaction
+     * Synchronizes specific asset SKU to the user's active deployment (cart).
+     */
     const handleQuickAdd = async (e, product) => {
         e.stopPropagation(); 
         if (!isAuthenticated) return navigate("/login");
@@ -69,23 +81,28 @@ const ProductGallery = () => {
             if (fetchCart) await fetchCart();
             showToast(`${product.name} synchronized to deployment`, "success");
         } catch (err) {
-            showToast("Synchronization Failed", "error");
+            showToast("Synchronization failed: Asset conflict", "error");
         } finally {
             setProcessingId(null);
         }
     };
 
+    /**
+     * Compute Filtered Assets
+     * Derived state for performing real-time matching across names, descriptions, 
+     * and specific category sectors.
+     */
     const filteredProducts = useMemo(() => {
         const activeCategoryObj = categories.find(c => String(c.id) === String(activeCategoryId));
         const targetName = activeCategoryObj?.name?.toLowerCase().trim();
     
         return products.filter(p => {
-            // Logic: Real-time search matching across name and description
+            /** Logic: Search cross-reference across Name and Description */
             const matchesSearch = !searchTerm || 
                 p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 p.description?.toLowerCase().includes(searchTerm.toLowerCase());
             
-            // Logic: Category matching based on ID or Name
+            /** Logic: Sector-based category verification */
             let matchesCategory = true;
             if (activeCategoryId && targetName) {
                 const prodCatName = (p.categoryName || p.category || "").toLowerCase().trim();
@@ -101,6 +118,10 @@ const ProductGallery = () => {
         });
     }, [products, searchTerm, activeCategoryId, categories, sortBy]);
 
+    /**
+     * Sector Navigation Handler
+     * Updates URL parameters to trigger the filtered product memo.
+     */
     const handleCategoryClick = (id) => {
         if (!id) {
             searchParams.delete("category");
@@ -113,17 +134,21 @@ const ProductGallery = () => {
     if (loading) return (
         <div className={`min-h-screen flex flex-col items-center justify-center ${isDark ? 'bg-[#050505]' : 'bg-white'}`}>
             <Loader2 className="animate-spin text-cyan-500 mb-4" size={40} />
-            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Initializing Marketplace...</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 italic">Initializing Marketplace Registry...</p>
         </div>
     );
 
     return (
         <div className={`min-h-screen pb-20 px-8 md:px-16 transition-all duration-700 ${isDark ? 'bg-[#050505] text-white' : 'bg-white text-gray-900'}`}>
             
-            <header className="max-w-[1600px] mx-auto mb-12">
+            {/* Registry Header 
+                z-index is explicitly set to 10 to ensure the absolute-positioned 
+                UserNavbar (z-100) and MegaMenu (z-110) render above the gallery title.
+            */}
+            <header className="max-w-[1600px] mx-auto mb-12 relative z-10">
                 <div className="flex items-center gap-3 mb-8">
                     <span className="text-[10px] font-black tracking-[0.4em] text-cyan-500 uppercase">
-                        Registry / Hardware Marketplace
+                        Marketplace Registry 
                     </span>
                     <div className="h-[1px] flex-grow bg-current opacity-10"></div>
                 </div>
@@ -134,7 +159,7 @@ const ProductGallery = () => {
                             Marketplace
                         </h2>
                         <p className="text-[11px] font-black tracking-[0.2em] uppercase opacity-40 mt-4">
-                            {filteredProducts.length} Assets Identified
+                            {filteredProducts.length} Assets Identified in Local Sector
                         </p>
                     </div>
                     
@@ -151,6 +176,7 @@ const ProductGallery = () => {
                     </div>
                 </div>
 
+                {/** Category Sector Navigation */}
                 <div className="flex gap-4 mt-16 overflow-x-auto pb-6 no-scrollbar border-b border-current/5">
                     <button
                         onClick={() => handleCategoryClick(null)}
@@ -178,7 +204,8 @@ const ProductGallery = () => {
                 </div>
             </header>
 
-            <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-20">
+            {/** Registry Product Grid */}
+            <div className="max-w-[1600px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-20 relative z-0">
                 {filteredProducts.map((product) => {
                     const isOutOfStock = product.quantity === 0 || product.stockQuantity === 0;
 
@@ -198,7 +225,7 @@ const ProductGallery = () => {
                                 {isOutOfStock && (
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="bg-black/80 backdrop-blur-md px-8 py-3 rounded-full border border-white/10">
-                                            <span className="text-white text-[10px] font-black tracking-[0.4em] uppercase">Depleted</span>
+                                            <span className="text-white text-[10px] font-black tracking-[0.4em] uppercase font-sans">Depleted</span>
                                         </div>
                                     </div>
                                 )}
@@ -245,17 +272,18 @@ const ProductGallery = () => {
                 })}
             </div>
 
+            {/** Logic: Handling Null Results */}
             {filteredProducts.length === 0 && (
                 <div className="max-w-xl mx-auto py-40 text-center flex flex-col items-center gap-8 animate-in fade-in duration-1000">
                     <SearchX size={64} strokeWidth={1} className="opacity-10 text-cyan-500" />
                     <div className="space-y-2">
-                        <p className="text-[11px] font-black uppercase tracking-[0.5em] opacity-40">Zero Assets Identified</p>
-                        <p className="text-slate-500 text-xs">No assets matching the current registry parameters were found.</p>
+                        <p className="text-[11px] font-black uppercase tracking-[0.5em] opacity-40">Zero Products Identified</p>
+                        <p className="text-slate-500 text-xs">The requested search parameters yielded no results in the current registry.</p>
                     </div>
                     <button 
                         onClick={() => {
                             handleCategoryClick(null);
-                            if (setSearchTerm) setSearchTerm(""); // 🎯 Fix: Resets Navbar search too
+                            if (setSearchTerm) setSearchTerm(""); 
                         }}
                         className="text-cyan-500 text-[10px] font-black uppercase tracking-widest border-b border-cyan-500/20 hover:border-cyan-500 pb-1"
                     >
