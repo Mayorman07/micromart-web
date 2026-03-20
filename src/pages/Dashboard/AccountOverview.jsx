@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Edit2, Wallet, Loader2, ShieldCheck, MapPin, User as UserIcon } from "lucide-react";
 import api from "../../services/api";
 
@@ -14,13 +14,14 @@ const AccountOverview = () => {
     /** Hooks and Navigation */
     const { isDark } = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
     
     /** State Management */
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     
     /** * Resource Identification
-     * Retrieve the unique identifier from local persistence for API synchronization.
+     * Retrieve the unique identifier from local persistence.
      */
     const userEmail = localStorage.getItem("userEmail") || "mayowa.hyde@gmail.com";
 
@@ -45,7 +46,7 @@ const AccountOverview = () => {
         
         fetchUserProfile();
         return () => { isMounted = false; };
-    }, [userEmail]);
+    }, [userEmail, location.key]); // Trigger re-fetch on navigation
 
     if (loading) return (
         <div className="flex h-[60vh] flex-col items-center justify-center gap-4">
@@ -57,10 +58,11 @@ const AccountOverview = () => {
     /** Computed Properties for Display */
     const fullName = `${userData?.firstName || ''} ${userData?.lastName || ''}`;
     
-    /** * Address Mapping 
-     * Targeted to the singular 'address' object as defined in the backend DTO.
+    /** * Address Mapping Strategy:
+     * 1. Check singular 'address' object (optimized DTO).
+     * 2. Fallback to the first item in the 'addresses' list (JPA OneToMany).
      */
-    const displayAddress = userData?.address;
+    const displayAddress = userData?.address || (userData?.addresses && userData.addresses[0]);
 
     /** Design System Constants */
     const cardBase = `p-8 rounded-[2.5rem] border transition-all duration-700 ${
@@ -70,7 +72,7 @@ const AccountOverview = () => {
     const labelStyle = `text-[10px] font-black uppercase tracking-[0.3em] ${isDark ? 'text-slate-500' : 'text-gray-400'}`;
 
     return (
-        <div className="animate-in fade-in duration-700 space-y-8">
+        <div key={location.key} className="animate-in fade-in duration-700 space-y-8">
             <header>
                 <h1 className={`text-4xl font-black tracking-tighter uppercase italic transition-colors duration-500
                     ${isDark ? 'text-white' : 'text-gray-900'}`}>
@@ -93,7 +95,6 @@ const AccountOverview = () => {
                         <button 
                             onClick={() => navigate("/account/settings")} 
                             className="text-cyan-500 hover:text-cyan-400 transition-colors"
-                            aria-label="Edit Profile"
                         >
                             <Edit2 size={16} />
                         </button>
@@ -123,7 +124,6 @@ const AccountOverview = () => {
                         <button 
                             onClick={() => navigate("/account/settings")} 
                             className="text-cyan-500 hover:text-cyan-400 transition-colors"
-                            aria-label="Modify Address"
                         >
                             <Edit2 size={16} />
                         </button>
@@ -137,8 +137,9 @@ const AccountOverview = () => {
                                 <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
                                     {displayAddress.city}, {displayAddress.state} {displayAddress.zipCode}
                                 </p>
+                                {/* 🎯 Logic: Priority display for Location Region */}
                                 <p className="text-[10px] font-black text-cyan-500/60 uppercase tracking-widest mt-2">
-                                    {displayAddress.country}
+                                    {displayAddress.country || displayAddress.state || displayAddress.city || "Registry Entry Pending"}
                                 </p>
                             </div>
                         ) : (
@@ -150,7 +151,7 @@ const AccountOverview = () => {
                                     onClick={() => navigate("/account/settings")} 
                                     className="text-cyan-500 text-[10px] font-black uppercase mt-6 border-b border-cyan-500/20 hover:border-cyan-500 transition-all pb-1"
                                 >
-                                    Update Address details
+                                    Update Address Details
                                 </button>
                             </div>
                         )}
