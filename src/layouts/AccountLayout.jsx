@@ -1,8 +1,10 @@
 import { NavLink, Outlet, useLocation, Navigate } from "react-router-dom";
 import { User, Package, Tag, CreditCard } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useSessionTimeout } from "../hooks/useSessionTimeout"; 
 
 const AccountLayout = () => {
+    useSessionTimeout();
     const { isDark } = useTheme();
     const location = useLocation();
     const isAuthenticated = !!localStorage.getItem("token");
