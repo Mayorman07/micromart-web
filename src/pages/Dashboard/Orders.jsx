@@ -1,12 +1,21 @@
 import { useState, useEffect } from "react";
-import { Package, ArrowRight, Loader2, ChevronLeft, ChevronRight, X, ShieldCheck, ShoppingCart, RefreshCcw } from "lucide-react";
+import { useOutletContext } from "react-router-dom";
+import { Package, ArrowRight, Loader2, ChevronLeft, ChevronRight, X, ShieldCheck, RefreshCcw } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useToast } from "../../contexts/ToastContext";
 import api from "../../services/api"; 
 
+/**
+ * Orders Component
+ * Handles historical transaction auditing and batch asset re-acquisition.
+ */
 const Orders = () => {
     const { isDark } = useTheme();
     const { showToast } = useToast();
+    
+    // Pulling global cart controls from UserLayout context
+    const { fetchCart, toggleCart } = useOutletContext() || {};
+
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState(0);
@@ -46,15 +55,15 @@ const Orders = () => {
     };
 
     /**
-     *  RE-ACQUIRE ASSETS LOGIC
-     * Iterates through the order snapshot and re-deploys items to the active cart.
+     * handleReorder Logic
+     * Performs batch synchronization of historical assets to the active cart registry.
      */
     const handleReorder = async () => {
         if (!selectedOrder?.items?.length) return;
         
         setIsRestocking(true);
         try {
-            // Simultaneous deployment to the Cart Microservice
+            // Deploy all items from snapshot to cart microservice
             await Promise.all(
                 selectedOrder.items.map(item => 
                     api.post("/cart/api/cart/items", {
@@ -64,11 +73,18 @@ const Orders = () => {
                 )
             );
 
-            showToast("ORDER ASSETS RE-DEPLOYED TO REGISTRY", "success");
-            setSelectedOrder(null); // Close the snapshot
+            // 1. Refresh the global cart state to update navbar count
+            if (fetchCart) await fetchCart();
             
-            // Note: If you have a global cart fetcher in context, call it here:
-            // if (fetchCart) await fetchCart();
+            showToast("ORDER ASSETS RE-DEPLOYED TO REGISTRY", "success");
+            
+            // 2. Close the snapshot modal
+            setSelectedOrder(null); 
+            
+            // 3. Open the Cart Drawer to show immediate results
+            if (toggleCart) {
+                setTimeout(() => toggleCart(), 300);
+            }
             
         } catch (err) {
             showToast("RE-DEPLOYMENT FAILURE: STOCK DEPLETED", "error");
@@ -110,7 +126,6 @@ const Orders = () => {
                     </div>
                 </header>
 
-                {/* Orders List */}
                 <div className="grid gap-6">
                     {orders.map((order) => (
                         <div 
@@ -147,7 +162,6 @@ const Orders = () => {
                     ))}
                 </div>
 
-                {/* Pagination (Simplified for HUD) */}
                 {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-8 mt-16">
                         <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="p-4 opacity-50 hover:opacity-100 disabled:opacity-5">
@@ -161,7 +175,6 @@ const Orders = () => {
                 )}
             </div>
 
-            {/* --- SLIDE-OVER DETAILS OVERLAY --- */}
             {selectedOrder && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-end p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
@@ -209,7 +222,6 @@ const Orders = () => {
                             </div>
                         </div>
 
-                        {/* 💳 BOTTOM ACTION PANEL */}
                         <div className="p-10 bg-cyan-500 text-black rounded-b-[2.5rem]">
                             <div className="flex justify-between items-center">
                                 <div>
@@ -220,14 +232,14 @@ const Orders = () => {
                                 <button 
                                     onClick={handleReorder}
                                     disabled={isRestocking}
-                                    className="px-8 py-4 bg-black text-white rounded-2xl flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                                    className="px-8 py-4 bg-black text-white rounded-2xl flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50 group"
                                 >
                                     {isRestocking ? (
                                         <Loader2 className="animate-spin" size={20} />
                                     ) : (
                                         <>
                                             <span className="text-[10px] font-black uppercase tracking-widest">Repeat Order</span>
-                                            <RefreshCcw size={18} />
+                                            <RefreshCcw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
                                         </>
                                     )}
                                 </button>
