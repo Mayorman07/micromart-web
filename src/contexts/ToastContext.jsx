@@ -16,22 +16,18 @@ export const ToastProvider = ({ children }) => {
         }, 3500);
     }, []);
 
-    const removeToast = (id) => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-    };
-
     return (
         <ToastContext.Provider value={{ showToast }}>
             {children}
             
-            {/* Tactical Toast Container */}
-            <div className="fixed bottom-10 right-10 z-[200] flex flex-col gap-4 pointer-events-none">
+            {/* 🎯 Tactical HUD Toast Container (Z-Index 200) */}
+            <div className="fixed bottom-10 right-10 z-[200] flex flex-col gap-4 pointer-events-none items-end">
                 {toasts.map((toast) => (
                     <div 
                         key={toast.id} 
                         className={`
-                            pointer-events-auto flex items-center justify-between gap-8 min-w-[320px] 
-                            px-6 py-4 border-l-4 backdrop-blur-2xl shadow-2xl transition-all duration-500
+                            pointer-events-auto flex items-center justify-between gap-10 min-w-[340px] 
+                            px-6 py-5 border-l-4 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500
                             animate-in slide-in-from-right-10 fade-in
                             ${toast.type === 'success' 
                                 ? 'bg-slate-950/90 border-cyan-500 text-white' 
@@ -40,18 +36,17 @@ export const ToastProvider = ({ children }) => {
                         `}
                     >
                         <div className="flex flex-col gap-1">
-                            {/* Meta-header for tactical feel */}
-                            <span className="text-[8px] font-black uppercase tracking-[0.4em] opacity-40">
-                                {toast.type === 'success' ? 'Registry Update' : 'System Alert'}
+                            <span className="text-[8px] font-black uppercase tracking-[0.5em] opacity-30">
+                                {toast.type === 'success' ? 'Registry Synchronized' : 'System Exception'}
                             </span>
-                            <span className="text-[11px] font-bold uppercase tracking-widest font-mono">
+                            <span className="text-[11px] font-bold uppercase tracking-widest font-mono italic">
                                 {toast.message}
                             </span>
                         </div>
 
                         {/* Status Pulse Indicator */}
-                        <div className={`h-1.5 w-1.5 rounded-full animate-pulse ${
-                            toast.type === 'success' ? 'bg-cyan-500' : 'bg-red-500'
+                        <div className={`h-2 w-2 rounded-full animate-pulse ${
+                            toast.type === 'success' ? 'bg-cyan-500 shadow-[0_0_10px_#06b6d4]' : 'bg-red-500'
                         }`} />
                     </div>
                 ))}

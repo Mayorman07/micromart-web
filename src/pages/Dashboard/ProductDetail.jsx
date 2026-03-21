@@ -32,7 +32,7 @@ const ProductDetail = () => {
         const fetchProduct = async () => {
             try {
                 // Ensure the backend endpoint /products/sku/{skuCode} is active
-                const response = await api.get(`products/products/sku/${skuCode}`);
+                const response = await api.get(`/products/products/sku/${skuCode}`);
                 setProduct(response.data);
             } catch (err) {
                 showToast("Asset synchronization failed: SKU not found in registry", "error");
