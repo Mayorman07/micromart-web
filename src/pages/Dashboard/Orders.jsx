@@ -104,7 +104,7 @@ const handleReorder = async () => {
             )
         );
 
-        showToast("ASSETS RE-DEPLOYED TO REGISTRY", "success");
+        showToast("PREVIOUS ITEMS ADDED TO CART", "success");
         setSelectedOrder(null); 
         
         window.dispatchEvent(new CustomEvent("cartRegistrySync", { 
