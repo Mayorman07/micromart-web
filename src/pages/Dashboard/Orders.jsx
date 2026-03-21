@@ -95,7 +95,6 @@ const handleReorder = async () => {
     
     setIsRestocking(true);
     try {
-        // 1. Deploy to backend
         await Promise.all(
             selectedOrder.items.map(item => 
                 api.post("/cart/api/cart/items", {
@@ -108,7 +107,9 @@ const handleReorder = async () => {
         showToast("ASSETS RE-DEPLOYED TO REGISTRY", "success");
         setSelectedOrder(null); 
         
-        window.dispatchEvent(new Event("cartRegistrySync"));
+        window.dispatchEvent(new CustomEvent("cartRegistrySync", { 
+            detail: { openCart: true, delay: 2000 } 
+        }));
         
     } catch (err) {
         showToast("FAILURE TO ADD PRODUCT TO CART", "error");

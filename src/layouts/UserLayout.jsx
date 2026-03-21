@@ -33,15 +33,18 @@ const UserLayout = () => {
             setLoading(false);
         }
     }, [isAuthenticated]);
-// UserLayout.jsx
 
 useEffect(() => {
-    // Initial load
     fetchCart();
 
-    const handleGlobalSync = () => {
-        fetchCart();
-        setIsCartOpen(true); // Pop the drawer open automatically
+    const handleGlobalSync = (event) => {
+        fetchCart(); // Instantly update the backend data and badge
+        
+        if (event.detail?.openCart) {
+            setTimeout(() => {
+                setIsCartOpen(true);
+            }, event.detail.delay || 0);
+        }
     };
 
     window.addEventListener("cartRegistrySync", handleGlobalSync);
