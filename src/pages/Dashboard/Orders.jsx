@@ -71,45 +71,56 @@ const Orders = () => {
      * Re-deploys historical assets to the active cart.
      * Enforces settlement check: only PAID or COMPLETED orders are eligible.
      */
-    const handleReorder = async () => {
-        const status = selectedOrder?.orderStatus?.toUpperCase();
-        
-        /** Logical Guard: Ensure order ledger is settled */
-        if (status !== 'PAID' && status !== 'COMPLETED') {
-            showToast("ACTION DENIED: ORDER LEDGER UNSETTLED", "error");
-            return;
-        }
+  /**
+     * handleReorder
+     * Executes batch synchronization with an awaited registry fetch.
+     * Ensures local state is fully updated before triggering UI transitions.
+     */
+  const handleReorder = async () => {
+    const status = selectedOrder?.orderStatus?.toUpperCase();
+    
+    if (status !== 'PAID' && status !== 'COMPLETED') {
+        showToast("ACTION DENIED: PENDING ORDER UNSETTLED", "error");
+        return;
+    }
 
-        if (!selectedOrder?.items?.length) return;
-        
-        setIsRestocking(true);
-        try {
-            /** Batch synchronization with the Cart Microservice */
-            await Promise.all(
-                selectedOrder.items.map(item => 
-                    api.post("/cart/api/cart/items", {
-                        skuCode: item.skuCode,
-                        quantity: item.quantity || 1
-                    })
-                )
-            );
+    if (!selectedOrder?.items?.length) return;
+    
+    setIsRestocking(true);
+    try {
+        /** 1. Deploy all assets to the backend Cart Service */
+        await Promise.all(
+            selectedOrder.items.map(item => 
+                api.post("/cart/api/cart/items", {
+                    skuCode: item.skuCode,
+                    quantity: item.quantity || 1
+                })
+            )
+        );
 
-            /** State verification and UI transition */
-            if (fetchCart) await fetchCart();
-            
-            showToast("PRODUCT ADDED TO CART", "success");
-            setSelectedOrder(null); 
-            
-            if (setIsCartOpen) {
-                setTimeout(() => setIsCartOpen(true), 400);
-            }
-            
-        } catch (err) {
-            showToast("FAILURE TO ADD PRODUCT TO CART", "error");
-        } finally {
-            setIsRestocking(false);
+        /** 2. CRITICAL SYNC: Await the global fetchCart function 
+         * This forces the UserLayout to pull the fresh data from the DB.
+         */
+        if (fetchCart) {
+            await fetchCart(); 
         }
-    };
+        
+        showToast("PRODUCT ADDED TO CART", "success");
+        
+        /** 3. Smooth UI Transition */
+        setSelectedOrder(null); 
+        
+        /** 4. Trigger Drawer with a slight timeout to allow state to settle */
+        if (setIsCartOpen) {
+            setTimeout(() => setIsCartOpen(true), 300);
+        }
+        
+    } catch (err) {
+        showToast("FAILURE TO SYNC REGISTRY", "error");
+    } finally {
+        setIsRestocking(false);
+    }
+};
 
     const getStatusStyle = (status) => {
         switch (status?.toUpperCase()) {
