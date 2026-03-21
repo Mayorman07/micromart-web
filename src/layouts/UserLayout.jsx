@@ -33,10 +33,23 @@ const UserLayout = () => {
             setLoading(false);
         }
     }, [isAuthenticated]);
+// UserLayout.jsx
 
-    useEffect(() => {
+useEffect(() => {
+    // Initial load
+    fetchCart();
+
+    const handleGlobalSync = () => {
         fetchCart();
-    }, [fetchCart]);
+        setIsCartOpen(true); // Pop the drawer open automatically
+    };
+
+    window.addEventListener("cartRegistrySync", handleGlobalSync);
+    
+    return () => {
+        window.removeEventListener("cartRegistrySync", handleGlobalSync);
+    };
+}, [fetchCart]);
 
     const handleUpdateQuantity = async (skuCode, newQty) => {
         if (newQty < 1) return;
