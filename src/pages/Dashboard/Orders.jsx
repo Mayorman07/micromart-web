@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
-import { Package, ArrowRight, Loader2, ChevronLeft, ChevronRight, X, ShieldCheck } from "lucide-react";
+import { Package, ArrowRight, Loader2, ChevronLeft, ChevronRight, X, ShieldCheck, ShoppingCart, RefreshCcw } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useToast } from "../../contexts/ToastContext";
+import api from "../../services/api"; 
 
-/**
- * Orders Component
- * Enterprise-grade order registry with paginated data fetching
- * and high-contrast professional dark/light modes.
- */
 const Orders = () => {
     const { isDark } = useTheme();
+    const { showToast } = useToast();
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState(0);
@@ -16,6 +14,7 @@ const Orders = () => {
     
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
+    const [isRestocking, setIsRestocking] = useState(false);
 
     useEffect(() => {
         fetchOrders();
@@ -24,20 +23,11 @@ const Orders = () => {
     const fetchOrders = async () => {
         setIsLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`http://127.0.0.1:7082/order/api/orders/my-orders/paginated?page=${page}&size=5`, {
-                headers: { 
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json"
-                }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setOrders(data.content || []);
-                setTotalPages(data.totalPages || 0);
-            }
+            const response = await api.get(`/order/api/orders/my-orders/paginated?page=${page}&size=5`);
+            setOrders(response.data.content || []);
+            setTotalPages(response.data.totalPages || 0);
         } catch (error) { 
-            console.error("Critical: Failed to sync order registry", error); 
+            console.error("Critical: Failed to sync order ledger", error); 
         } finally { 
             setIsLoading(false); 
         }
@@ -46,18 +36,44 @@ const Orders = () => {
     const fetchOrderDetails = async (orderNumber) => {
         setIsDetailLoading(true);
         try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`http://127.0.0.1:7082/order/api/orders/${orderNumber}`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setSelectedOrder(data);
-            }
+            const response = await api.get(`/order/api/orders/${orderNumber}`);
+            setSelectedOrder(response.data);
         } catch (error) { 
-            console.error("Order snapshot retrieval failed", error); 
+            showToast("SNAPSHOT RETRIEVAL FAILED", "error");
         } finally { 
             setIsDetailLoading(false); 
+        }
+    };
+
+    /**
+     *  RE-ACQUIRE ASSETS LOGIC
+     * Iterates through the order snapshot and re-deploys items to the active cart.
+     */
+    const handleReorder = async () => {
+        if (!selectedOrder?.items?.length) return;
+        
+        setIsRestocking(true);
+        try {
+            // Simultaneous deployment to the Cart Microservice
+            await Promise.all(
+                selectedOrder.items.map(item => 
+                    api.post("/cart/api/cart/items", {
+                        skuCode: item.skuCode,
+                        quantity: item.quantity || 1
+                    })
+                )
+            );
+
+            showToast("ORDER ASSETS RE-DEPLOYED TO REGISTRY", "success");
+            setSelectedOrder(null); // Close the snapshot
+            
+            // Note: If you have a global cart fetcher in context, call it here:
+            // if (fetchCart) await fetchCart();
+            
+        } catch (err) {
+            showToast("RE-DEPLOYMENT FAILURE: STOCK DEPLETED", "error");
+        } finally {
+            setIsRestocking(false);
         }
     };
 
@@ -83,28 +99,20 @@ const Orders = () => {
 
     return (
         <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-[#0a0f1d] text-[#e5e7eb]' : 'bg-[#f9fafb] text-[#111827]'}`}>
-            
-            {/* Main Content Area: Padding-left logic added to prevent sidebar collision */}
             <div className="max-w-[1200px] mx-auto px-6 py-12 md:px-16 lg:px-24">
                 
-                {/* Header Section */}
-                <div className="pt-10 mb-12 pb-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-end">
+                <header className="pt-10 mb-12 pb-8 border-b border-gray-100 dark:border-white/5 flex justify-between items-end">
                     <div>
-                        <h2 className="text-4xl font-black tracking-tighter uppercase">My Orders</h2>
-                        <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mt-2 ${isDark ? 'text-[#9ca3af]' : 'text-gray-500'}`}>
-                            Transaction Audit Logs
+                        <h2 className="text-4xl font-black tracking-tighter uppercase italic">My Orders</h2>
+                        <p className={`text-[10px] font-bold uppercase tracking-[0.2em] mt-2 opacity-50`}>
+                            Transaction Audit Logs v4.1
                         </p>
                     </div>
-                    {orders.length > 0 && (
-                        <div className={`px-4 py-2 rounded-lg text-[10px] font-black border ${isDark ? 'bg-[#111827] border-white/10' : 'bg-white border-gray-200 shadow-sm'}`}>
-                            {orders.length} TOTAL ASSETS
-                        </div>
-                    )}
-                </div>
+                </header>
 
                 {/* Orders List */}
                 <div className="grid gap-6">
-                    {orders.length > 0 ? orders.map((order) => (
+                    {orders.map((order) => (
                         <div 
                             key={order.orderNumber} 
                             onClick={() => fetchOrderDetails(order.orderNumber)}
@@ -119,7 +127,7 @@ const Orders = () => {
                                 </div>
                                 <div>
                                     <h4 className="font-mono font-bold text-sm tracking-tight">{order.orderNumber}</h4>
-                                    <p className={`text-[10px] font-bold uppercase mt-1 ${isDark ? 'text-[#9ca3af]' : 'text-gray-500'}`}>
+                                    <p className={`text-[10px] font-bold uppercase mt-1 opacity-50`}>
                                         {new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}
                                     </p>
                                 </div>
@@ -130,42 +138,23 @@ const Orders = () => {
                                     <p className={`text-[9px] font-bold uppercase mb-1 opacity-40`}>Settled Amount</p>
                                     <p className="font-black text-xl tracking-tight">${order.totalAmount.toFixed(2)}</p>
                                 </div>
-                                
                                 <div className={`px-5 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${getStatusStyle(order.orderStatus)}`}>
                                     {order.orderStatus}
                                 </div>
-
-                                <div className={`p-3 rounded-xl ${isDark ? 'bg-white/5' : 'bg-gray-100'} opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all`}>
-                                    <ArrowRight size={20} />
-                                </div>
+                                <ArrowRight size={20} className="opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                             </div>
                         </div>
-                    )) : (
-                        <div className="py-32 text-center opacity-20">
-                            <Package size={64} className="mx-auto mb-4" strokeWidth={1} />
-                            <p className="text-xs font-bold uppercase tracking-[0.3em]">No Assets Registered</p>
-                        </div>
-                    )}
+                    ))}
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination (Simplified for HUD) */}
                 {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-8 mt-16">
-                        <button 
-                            disabled={page === 0}
-                            onClick={() => setPage(p => p - 1)}
-                            className={`p-4 rounded-xl transition-all ${isDark ? 'bg-[#111827] border border-white/5 hover:bg-[#1a2233]' : 'bg-white border border-gray-200 hover:bg-gray-50'} disabled:opacity-10`}
-                        >
+                        <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="p-4 opacity-50 hover:opacity-100 disabled:opacity-5">
                             <ChevronLeft size={20} />
                         </button>
-                        <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-50">
-                            {page + 1} / {totalPages}
-                        </span>
-                        <button 
-                            disabled={page >= totalPages - 1}
-                            onClick={() => setPage(p => p + 1)}
-                            className={`p-4 rounded-xl transition-all ${isDark ? 'bg-[#111827] border border-white/5 hover:bg-[#1a2233]' : 'bg-white border border-gray-200 hover:bg-gray-50'} disabled:opacity-10`}
-                        >
+                        <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-50">{page + 1} / {totalPages}</span>
+                        <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="p-4 opacity-50 hover:opacity-100 disabled:opacity-5">
                             <ChevronRight size={20} />
                         </button>
                     </div>
@@ -176,27 +165,25 @@ const Orders = () => {
             {selectedOrder && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-end p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
-                    <div className={`relative w-full max-w-xl h-full rounded-3xl shadow-3xl flex flex-col animate-in slide-in-from-right duration-500 
-                        ${isDark ? 'bg-[#0a0f1d] border-l border-white/5' : 'bg-white'}`}>
+                    <div className={`relative w-full max-w-xl h-full rounded-[2.5rem] shadow-3xl flex flex-col animate-in slide-in-from-right duration-500 
+                        ${isDark ? 'bg-[#0a0f1d] border-l border-white/5' : 'bg-white text-gray-900'}`}>
                         
                         <div className={`p-10 border-b ${isDark ? 'border-white/5' : 'border-gray-100'} flex justify-between items-center`}>
-                            <h3 className="text-2xl font-black uppercase tracking-tighter">Order Snapshot</h3>
-                            <button onClick={() => setSelectedOrder(null)} className={`p-3 rounded-full ${isDark ? 'hover:bg-white/5' : 'hover:bg-gray-100'}`}>
-                                <X size={24}/>
-                            </button>
+                            <h3 className="text-2xl font-black uppercase tracking-tighter italic">Order Snapshot</h3>
+                            <button onClick={() => setSelectedOrder(null)} className="p-2 opacity-50 hover:rotate-90 transition-transform"><X size={24}/></button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-10 space-y-12">
+                        <div className="flex-1 overflow-y-auto p-10 space-y-12 no-scrollbar">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className={`p-6 rounded-2xl border ${isDark ? 'bg-[#111827] border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase tracking-widest mb-2">Audit Reference</p>
+                                    <p className="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mb-2">Audit Reference</p>
                                     <p className="font-mono text-xs font-bold">{selectedOrder.orderNumber}</p>
                                 </div>
                                 <div className={`p-6 rounded-2xl border ${isDark ? 'bg-[#111827] border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-                                    <p className="text-[9px] font-bold opacity-40 uppercase tracking-widest mb-2">Network Status</p>
-                                    <p className={`text-xs font-black uppercase ${getStatusStyle(selectedOrder.orderStatus)} bg-transparent border-none p-0`}>
+                                    <p className="text-[9px] font-bold opacity-30 uppercase tracking-[0.2em] mb-2">Network Status</p>
+                                    <span className={`text-[10px] font-black uppercase px-3 py-1 rounded ${getStatusStyle(selectedOrder.orderStatus)}`}>
                                         {selectedOrder.orderStatus}
-                                    </p>
+                                    </span>
                                 </div>
                             </div>
 
@@ -204,13 +191,13 @@ const Orders = () => {
                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30 mb-6">Asset Allocation</p>
                                 <div className="space-y-4">
                                     {selectedOrder.items?.map((item, idx) => (
-                                        <div key={idx} className={`flex items-center gap-6 p-5 rounded-2xl border ${isDark ? 'bg-[#111827]/40 border-white/5' : 'bg-gray-50/50 border-gray-100'}`}>
-                                            <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/5">
+                                        <div key={idx} className={`flex items-center gap-6 p-5 rounded-2xl border ${isDark ? 'bg-white/5 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+                                            <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/5 bg-black">
                                                 <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-xs font-black uppercase">{item.productName}</p>
-                                                <p className="text-[10px] font-mono opacity-40 mt-1">SKU: {item.skuCode}</p>
+                                                <p className="text-xs font-black uppercase tracking-tight">{item.productName}</p>
+                                                <p className="text-[9px] font-mono opacity-40 mt-1 uppercase">SKU: {item.skuCode}</p>
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-sm font-black">x{item.quantity}</p>
@@ -222,13 +209,28 @@ const Orders = () => {
                             </div>
                         </div>
 
-                        <div className="p-10 bg-cyan-500 text-white">
+                        {/* 💳 BOTTOM ACTION PANEL */}
+                        <div className="p-10 bg-cyan-500 text-black rounded-b-[2.5rem]">
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <p className="text-[10px] font-bold uppercase opacity-70 mb-1">Total Valuation</p>
-                                    <p className="text-4xl font-black tracking-tighter">${selectedOrder.totalAmount.toFixed(2)}</p>
+                                    <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Total Valuation</p>
+                                    <p className="text-5xl font-black tracking-tighter italic">${selectedOrder.totalAmount.toFixed(2)}</p>
                                 </div>
-                                <ShieldCheck size={48} strokeWidth={1} className="opacity-30" />
+                                
+                                <button 
+                                    onClick={handleReorder}
+                                    disabled={isRestocking}
+                                    className="px-8 py-4 bg-black text-white rounded-2xl flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    {isRestocking ? (
+                                        <Loader2 className="animate-spin" size={20} />
+                                    ) : (
+                                        <>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Repeat Order</span>
+                                            <RefreshCcw size={18} />
+                                        </>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>
