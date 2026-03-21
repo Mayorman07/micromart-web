@@ -81,40 +81,45 @@ const Orders = () => {
      * Executes batch synchronization of historical items back to the active cart.
      * Triggers a global cart refresh and opens the cart drawer upon success.
      */
-    const handleReorder = async () => {
-        if (!selectedOrder?.items?.length) return;
-        
-        setIsRestocking(true);
-        try {
-            /** Batch deployment to the Cart Microservice */
-            await Promise.all(
-                selectedOrder.items.map(item => 
-                    api.post("/cart/api/cart/items", {
-                        skuCode: item.skuCode,
-                        quantity: item.quantity || 1
-                    })
-                )
-            );
+ /**
+ * handleReorder
+ * Executes batch synchronization with a forced delay to ensure backend 
+ * persistence before triggering a registry fetch.
+ */
+ const handleReorder = async () => {
+    if (!selectedOrder?.items?.length) return;
+    
+    setIsRestocking(true);
+    try {
+        // 1. Batch deployment
+        await Promise.all(
+            selectedOrder.items.map(item => 
+                api.post("/cart/api/cart/items", {
+                    skuCode: item.skuCode,
+                    quantity: item.quantity || 1
+                })
+            )
+        );
 
-            /** Synchronize global cart state */
-            if (fetchCart) await fetchCart();
-            
-            showToast("ORDER ASSETS RE-DEPLOYED TO REGISTRY", "success");
-            
-            /** Close the snapshot view */
-            setSelectedOrder(null); 
-            
-            /** Trigger immediate visual feedback via Cart Drawer */
-            if (setIsCartOpen) {
-                setTimeout(() => setIsCartOpen(true), 300);
-            }
-            
-        } catch (err) {
-            showToast("RE-DEPLOYMENT FAILURE: INVENTORY CONFLICT", "error");
-        } finally {
-            setIsRestocking(false);
+        // 2. CRITICAL: Await the state synchronization
+        if (fetchCart) {
+            await fetchCart(); 
         }
-    };
+        
+        showToast("PRODUCT ADDED TO CART", "success");
+        setSelectedOrder(null); 
+        
+        // 3. Automated UI transition
+        if (setIsCartOpen) {
+            setTimeout(() => setIsCartOpen(true), 300);
+        }
+        
+    } catch (err) {
+        showToast("FAILURE TO ADD PRODUCT TO CART", "error");
+    } finally {
+        setIsRestocking(false);
+    }
+};
 
     /** Utility: Status Aesthetic Mapping */
     const getStatusStyle = (status) => {
