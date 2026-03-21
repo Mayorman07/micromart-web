@@ -1,4 +1,3 @@
-// src/components/LiquidBackgroundVibrant.jsx
 const LiquidBackgroundVibrant = () => {
     return (
         <div className="fixed inset-0 w-full h-full overflow-hidden bg-blue-500 z-0">

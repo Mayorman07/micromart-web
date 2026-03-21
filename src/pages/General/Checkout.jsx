@@ -19,7 +19,6 @@ const Checkout = ({ isRetry = false }) => {
 
     const handleOrderRecovery = async () => {
         try {
-            // Using your custom API instance
             const response = await api.get(`order/api/orders/${orderId}`);
             const data = response.data;
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, CreditCard, Bitcoin, Building2, Copy, CheckCircle2, Loader2, ShieldCheck, MapPin } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
-import api from "../services/api"; // 🎯 Use your interceptor-protected instance
+import api from "../services/api"; // 
 
 const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
     const { isDark } = useTheme();

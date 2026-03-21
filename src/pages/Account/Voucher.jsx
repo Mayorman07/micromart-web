@@ -9,7 +9,6 @@ const Voucher = () => {
     const [voucherCode, setVoucherCode] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Placeholder data for Monday's logic integration
     const [activeVouchers] = useState([
         {
             id: 1,
@@ -34,7 +33,6 @@ const Voucher = () => {
         if (!voucherCode) return;
         
         setIsSubmitting(true);
-        // This is where your Monday API logic will go
         setTimeout(() => {
             showToast("Voucher logic will be active on Monday", "info");
             setIsSubmitting(false);

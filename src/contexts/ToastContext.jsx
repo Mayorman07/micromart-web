@@ -20,7 +20,7 @@ export const ToastProvider = ({ children }) => {
         <ToastContext.Provider value={{ showToast }}>
             {children}
             
-            {/* 🎯 Tactical HUD Toast Container (Z-Index 200) */}
+            {/* Tactical HUD Toast Container (Z-Index 200) */}
             <div className="fixed bottom-10 right-10 z-[200] flex flex-col gap-4 pointer-events-none items-end">
                 {toasts.map((toast) => (
                     <div 

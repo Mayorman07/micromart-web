@@ -35,14 +35,14 @@ const AdminLogin = () => {
             // Using api instance for consistent routing and base URL
             const response = await api.post("/users/users/login", formData);
 
-            // 🎯 Extracting refreshToken along with token
+            //  Extracting refreshToken along with token
             const { token, refreshToken, userId } = response.data;
             
             if (!token) {
                 throw new Error("Authentication failed: No token provided.");
             }
 
-            // ✅ Session persistence with refresh token support
+            // Session persistence with refresh token support
             localStorage.setItem("token", token);
             localStorage.setItem("refreshToken", refreshToken); 
             localStorage.setItem("userId", userId);

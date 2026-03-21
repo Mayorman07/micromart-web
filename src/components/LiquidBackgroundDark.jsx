@@ -1,4 +1,3 @@
-// src/components/LiquidBackground.jsx
 const LiquidBackground = () => {
     return (
         <div className="fixed inset-0 w-full h-full overflow-hidden bg-slate-900 z-0">

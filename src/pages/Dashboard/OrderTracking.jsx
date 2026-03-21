@@ -14,7 +14,6 @@ const OrderTracking = () => {
     useEffect(() => {
         const fetchTrackingDetails = async () => {
             try {
-                // Using your centralized API class
                 const response = await api.get(`order/api/orders/${orderId}`);
                 setOrder(response.data);
             } catch (error) {

@@ -59,12 +59,12 @@ function App() {
                 <Route path="/" element={<ProductGallery />} />
                 <Route path="/marketplace" element={<Navigate to="/" replace />} />
                 
-                {/* 🎯 Dynamic route for Product Details using SKU Code */}
+                {/*  Dynamic route for Product Details using SKU Code */}
                 <Route path="/product/:skuCode" element={<ProductDetail />} />
                 
                 <Route path="/offers" element={<Offers />} />
                 
-                {/* 💳 Payment & Tracking Routes */}
+                {/* Payment & Tracking Routes */}
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
                 <Route path="/orders/track/:orderId" element={<OrderTracking />} />

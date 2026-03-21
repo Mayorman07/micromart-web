@@ -38,7 +38,7 @@ useEffect(() => {
     fetchCart();
 
     const handleGlobalSync = (event) => {
-        fetchCart(); // Instantly update the backend data and badge
+        fetchCart(); 
         
         if (event.detail?.openCart) {
             setTimeout(() => {

@@ -25,7 +25,6 @@ const ProductGallery = () => {
         const loadRegistryData = async () => {
             setLoading(true);
             try {
-                // FETCH: Targeting the inventory and category microservices
                 const [prodRes, catRes] = await Promise.all([
                     api.get("/inventory/api/inventory/all"),
                     api.get("/products/categories/all")
@@ -52,7 +51,7 @@ const ProductGallery = () => {
         e.stopPropagation(); 
         if (!isAuthenticated) return navigate("/login");
 
-        // 🎯 FIX: Use the actual skuCode from the synchronized product object
+        // FIX: Use the actual skuCode from the synchronized product object
         setProcessingId(product.skuCode);
         try {
             await api.post("/cart/api/cart/items", {

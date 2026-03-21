@@ -1,4 +1,3 @@
-// src/components/LiquidBackgroundDeep.jsx
 const LiquidBackgroundDeep = () => {
     return (
         <div className="fixed inset-0 w-full h-full overflow-hidden bg-blue-600 z-0">

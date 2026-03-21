@@ -30,7 +30,7 @@ const CartDrawer = ({
             />
 
             {/* --- Drawer Container --- */}
-            {/* 🎯 FIX: Added flex flex-col to the main container */}
+            {/*  FIX: Added flex flex-col to the main container */}
             <div className={`fixed top-0 right-0 h-full z-[150] w-full max-w-md shadow-2xl transition-transform duration-500 ease-in-out flex flex-col
                 ${isOpen ? 'translate-x-0' : 'translate-x-full'}
                 ${isDark ? 'bg-[#0d1425] text-white border-l border-white/5' : 'bg-white text-gray-900 border-l border-gray-100'}`}>
@@ -55,7 +55,7 @@ const CartDrawer = ({
                     </div>
                 </div>
 
-                {/* 2. Items List (🎯 FIX: flex-1 and overflow-y-auto handles the scroll) */}
+                {/* 2. Items List ( FIX: flex-1 and overflow-y-auto handles the scroll) */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar custom-scrollbar">
                     {cartItems.length > 0 ? (
                         cartItems.map((item) => (

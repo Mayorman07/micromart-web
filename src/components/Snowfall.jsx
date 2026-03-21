@@ -18,15 +18,12 @@ const Snowfall = () => {
             {snowflakes.map((flake) => (
                 <div 
                     key={flake.id}
-                    // 1. ADD 'animate-snowfall' here. This forces Tailwind to generate the keyframes!
                     className="absolute top-[-20px] bg-white rounded-full shadow-[0_0_5px_rgba(255,255,255,0.8)] animate-snowfall"
                     style={{
                         left: `${flake.left}vw`,
                         width: `${flake.size}px`,
                         height: `${flake.size}px`,
                         opacity: flake.opacity,
-                        // 2. Override specific animation properties for randomness
-                        // (We don't set the full 'animation' string anymore, just the parts that change)
                         animationDuration: `${flake.duration}s`,
                         animationDelay: `-${flake.delay}s`,
                     }}
