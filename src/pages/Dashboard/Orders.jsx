@@ -16,16 +16,14 @@ import api from "../../services/api";
 
 /**
  * Orders Component
- * Manages the retrieval and display of historical transaction audit logs.
- * Includes functionality for batch asset re-acquisition and registry synchronization.
+ * Manages retrieval of historical transaction logs and asset re-acquisition.
+ * Restricted to settled (PAID/COMPLETED) entries to prevent registry redundancy.
  */
 const Orders = () => {
     const { isDark } = useTheme();
     const { showToast } = useToast();
     
-    /** * Context Extraction
-     * Pulls global cart state management functions from UserLayout.
-     */
+    /** Context Extraction */
     const { fetchCart, setIsCartOpen } = useOutletContext() || {};
 
     /** Local State Management */
@@ -38,15 +36,11 @@ const Orders = () => {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isRestocking, setIsRestocking] = useState(false);
 
-    /** Lifecycle: Initial Ledger Synchronization */
+    /** Lifecycle: Ledger Synchronization */
     useEffect(() => {
         fetchOrders();
     }, [page]);
 
-    /**
-     * fetchOrders
-     * Retrieves paginated order history for the authenticated user principal.
-     */
     const fetchOrders = async () => {
         setIsLoading(true);
         try {
@@ -60,10 +54,6 @@ const Orders = () => {
         }
     };
 
-    /**
-     * fetchOrderDetails
-     * Retrieves a detailed snapshot of a specific transaction by order number.
-     */
     const fetchOrderDetails = async (orderNumber) => {
         setIsDetailLoading(true);
         try {
@@ -78,50 +68,49 @@ const Orders = () => {
 
     /**
      * handleReorder
-     * Executes batch synchronization of historical items back to the active cart.
-     * Triggers a global cart refresh and opens the cart drawer upon success.
+     * Re-deploys historical assets to the active cart.
+     * Enforces settlement check: only PAID or COMPLETED orders are eligible.
      */
- /**
- * handleReorder
- * Executes batch synchronization with a forced delay to ensure backend 
- * persistence before triggering a registry fetch.
- */
- const handleReorder = async () => {
-    if (!selectedOrder?.items?.length) return;
-    
-    setIsRestocking(true);
-    try {
-        // 1. Batch deployment
-        await Promise.all(
-            selectedOrder.items.map(item => 
-                api.post("/cart/api/cart/items", {
-                    skuCode: item.skuCode,
-                    quantity: item.quantity || 1
-                })
-            )
-        );
-
-        // 2. CRITICAL: Await the state synchronization
-        if (fetchCart) {
-            await fetchCart(); 
+    const handleReorder = async () => {
+        const status = selectedOrder?.orderStatus?.toUpperCase();
+        
+        /** Logical Guard: Ensure order ledger is settled */
+        if (status !== 'PAID' && status !== 'COMPLETED') {
+            showToast("ACTION DENIED: ORDER LEDGER UNSETTLED", "error");
+            return;
         }
-        
-        showToast("PRODUCT ADDED TO CART", "success");
-        setSelectedOrder(null); 
-        
-        // 3. Automated UI transition
-        if (setIsCartOpen) {
-            setTimeout(() => setIsCartOpen(true), 300);
-        }
-        
-    } catch (err) {
-        showToast("FAILURE TO ADD PRODUCT TO CART", "error");
-    } finally {
-        setIsRestocking(false);
-    }
-};
 
-    /** Utility: Status Aesthetic Mapping */
+        if (!selectedOrder?.items?.length) return;
+        
+        setIsRestocking(true);
+        try {
+            /** Batch synchronization with the Cart Microservice */
+            await Promise.all(
+                selectedOrder.items.map(item => 
+                    api.post("/cart/api/cart/items", {
+                        skuCode: item.skuCode,
+                        quantity: item.quantity || 1
+                    })
+                )
+            );
+
+            /** State verification and UI transition */
+            if (fetchCart) await fetchCart();
+            
+            showToast("PRODUCT ADDED TO CART", "success");
+            setSelectedOrder(null); 
+            
+            if (setIsCartOpen) {
+                setTimeout(() => setIsCartOpen(true), 400);
+            }
+            
+        } catch (err) {
+            showToast("FAILURE TO ADD PRODUCT TO CART", "error");
+        } finally {
+            setIsRestocking(false);
+        }
+    };
+
     const getStatusStyle = (status) => {
         switch (status?.toUpperCase()) {
             case 'PAID':
@@ -204,7 +193,6 @@ const Orders = () => {
                 )}
             </div>
 
-            {/* Slide-over Detail Modal */}
             {selectedOrder && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-end p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
@@ -252,8 +240,12 @@ const Orders = () => {
                             </div>
                         </div>
 
-                        {/* Action Control Panel */}
-                        <div className="p-10 bg-cyan-500 text-black rounded-b-[2.5rem]">
+                        {/* ACTION PANEL: Status-driven aesthetic */}
+                        <div className={`p-10 rounded-b-[2.5rem] transition-colors duration-500 ${
+                            (selectedOrder.orderStatus === 'PAID' || selectedOrder.orderStatus === 'COMPLETED') 
+                            ? 'bg-cyan-500 text-black' 
+                            : 'bg-gray-200 dark:bg-[#1a2233] text-gray-500'
+                        }`}>
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="text-[10px] font-bold uppercase opacity-60 mb-1">Total Valuation</p>
@@ -262,16 +254,19 @@ const Orders = () => {
                                 
                                 <button 
                                     onClick={handleReorder}
-                                    disabled={isRestocking}
-                                    className="px-8 py-4 bg-black text-white rounded-2xl flex items-center gap-3 transition-all active:scale-95 disabled:opacity-50 group"
+                                    disabled={isRestocking || (selectedOrder.orderStatus !== 'PAID' && selectedOrder.orderStatus !== 'COMPLETED')}
+                                    className={`px-8 py-4 rounded-2xl flex items-center gap-3 transition-all font-black uppercase tracking-widest text-[10px]
+                                        ${(selectedOrder.orderStatus === 'PAID' || selectedOrder.orderStatus === 'COMPLETED')
+                                            ? 'bg-black text-white hover:scale-105 active:scale-95' 
+                                            : 'bg-transparent border border-current opacity-30 cursor-not-allowed'
+                                        }`}
                                 >
                                     {isRestocking ? (
                                         <Loader2 className="animate-spin" size={20} />
+                                    ) : (selectedOrder.orderStatus === 'PAID' || selectedOrder.orderStatus === 'COMPLETED') ? (
+                                        <>Repeat Order <RefreshCcw size={18} className="group-hover:rotate-180 transition-transform duration-500" /></>
                                     ) : (
-                                        <>
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Repeat Order</span>
-                                            <RefreshCcw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
-                                        </>
+                                        <>Settlement Required <ShieldCheck size={18} /></>
                                     )}
                                 </button>
                             </div>
