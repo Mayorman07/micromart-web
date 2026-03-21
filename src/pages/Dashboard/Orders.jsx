@@ -76,7 +76,12 @@ const Orders = () => {
      * Executes batch synchronization with an awaited registry fetch.
      * Ensures local state is fully updated before triggering UI transitions.
      */
-  const handleReorder = async () => {
+ /**
+     * handleReorder
+     * Executes batch synchronization with a high-priority registry fetch.
+     * Enforces settlement check: only PAID or COMPLETED orders are eligible.
+     */
+ const handleReorder = async () => {
     const status = selectedOrder?.orderStatus?.toUpperCase();
     
     if (status !== 'PAID' && status !== 'COMPLETED') {
@@ -88,7 +93,8 @@ const Orders = () => {
     
     setIsRestocking(true);
     try {
-        /** 1. Deploy all assets to the backend Cart Service */
+        // 1. Deploy all assets to the backend Cart Service
+        // We use map + Promise.all to ensure all 201s finish before proceeding
         await Promise.all(
             selectedOrder.items.map(item => 
                 api.post("/cart/api/cart/items", {
@@ -98,24 +104,24 @@ const Orders = () => {
             )
         );
 
-        /** 2. CRITICAL SYNC: Await the global fetchCart function 
-         * This forces the UserLayout to pull the fresh data from the DB.
-         */
-        if (fetchCart) {
+        // 2. CRITICAL SYNC: Execute the fetchCart from context
+        // If this doesn't update your UI, check the UserLayout.jsx console for errors
+        if (typeof fetchCart === 'function') {
             await fetchCart(); 
         }
         
         showToast("PRODUCT ADDED TO CART", "success");
         
-        /** 3. Smooth UI Transition */
+        // 3. Close the Snapshot Modal
         setSelectedOrder(null); 
         
-        /** 4. Trigger Drawer with a slight timeout to allow state to settle */
-        if (setIsCartOpen) {
+        // 4. Trigger Drawer with an automated transition
+        if (typeof setIsCartOpen === 'function') {
             setTimeout(() => setIsCartOpen(true), 300);
         }
         
     } catch (err) {
+        console.error("Registry Sync Failure:", err);
         showToast("FAILURE TO SYNC REGISTRY", "error");
     } finally {
         setIsRestocking(false);
