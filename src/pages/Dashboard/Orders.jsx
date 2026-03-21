@@ -1,21 +1,34 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Package, ArrowRight, Loader2, ChevronLeft, ChevronRight, X, ShieldCheck, RefreshCcw } from "lucide-react";
+import { 
+    Package, 
+    ArrowRight, 
+    Loader2, 
+    ChevronLeft, 
+    ChevronRight, 
+    X, 
+    ShieldCheck, 
+    RefreshCcw 
+} from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useToast } from "../../contexts/ToastContext";
 import api from "../../services/api"; 
 
 /**
  * Orders Component
- * Handles historical transaction auditing and batch asset re-acquisition.
+ * Manages the retrieval and display of historical transaction audit logs.
+ * Includes functionality for batch asset re-acquisition and registry synchronization.
  */
 const Orders = () => {
     const { isDark } = useTheme();
     const { showToast } = useToast();
     
-    // Pulling global cart controls from UserLayout context
-    const { fetchCart, toggleCart } = useOutletContext() || {};
+    /** * Context Extraction
+     * Pulls global cart state management functions from UserLayout.
+     */
+    const { fetchCart, setIsCartOpen } = useOutletContext() || {};
 
+    /** Local State Management */
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState(0);
@@ -25,10 +38,15 @@ const Orders = () => {
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isRestocking, setIsRestocking] = useState(false);
 
+    /** Lifecycle: Initial Ledger Synchronization */
     useEffect(() => {
         fetchOrders();
     }, [page]);
 
+    /**
+     * fetchOrders
+     * Retrieves paginated order history for the authenticated user principal.
+     */
     const fetchOrders = async () => {
         setIsLoading(true);
         try {
@@ -36,12 +54,16 @@ const Orders = () => {
             setOrders(response.data.content || []);
             setTotalPages(response.data.totalPages || 0);
         } catch (error) { 
-            console.error("Critical: Failed to sync order ledger", error); 
+            console.error("Critical: Ledger synchronization failure", error); 
         } finally { 
             setIsLoading(false); 
         }
     };
 
+    /**
+     * fetchOrderDetails
+     * Retrieves a detailed snapshot of a specific transaction by order number.
+     */
     const fetchOrderDetails = async (orderNumber) => {
         setIsDetailLoading(true);
         try {
@@ -55,15 +77,16 @@ const Orders = () => {
     };
 
     /**
-     * handleReorder Logic
-     * Performs batch synchronization of historical assets to the active cart registry.
+     * handleReorder
+     * Executes batch synchronization of historical items back to the active cart.
+     * Triggers a global cart refresh and opens the cart drawer upon success.
      */
     const handleReorder = async () => {
         if (!selectedOrder?.items?.length) return;
         
         setIsRestocking(true);
         try {
-            // Deploy all items from snapshot to cart microservice
+            /** Batch deployment to the Cart Microservice */
             await Promise.all(
                 selectedOrder.items.map(item => 
                     api.post("/cart/api/cart/items", {
@@ -73,26 +96,27 @@ const Orders = () => {
                 )
             );
 
-            // 1. Refresh the global cart state to update navbar count
+            /** Synchronize global cart state */
             if (fetchCart) await fetchCart();
             
             showToast("ORDER ASSETS RE-DEPLOYED TO REGISTRY", "success");
             
-            // 2. Close the snapshot modal
+            /** Close the snapshot view */
             setSelectedOrder(null); 
             
-            // 3. Open the Cart Drawer to show immediate results
-            if (toggleCart) {
-                setTimeout(() => toggleCart(), 300);
+            /** Trigger immediate visual feedback via Cart Drawer */
+            if (setIsCartOpen) {
+                setTimeout(() => setIsCartOpen(true), 300);
             }
             
         } catch (err) {
-            showToast("RE-DEPLOYMENT FAILURE: STOCK DEPLETED", "error");
+            showToast("RE-DEPLOYMENT FAILURE: INVENTORY CONFLICT", "error");
         } finally {
             setIsRestocking(false);
         }
     };
 
+    /** Utility: Status Aesthetic Mapping */
     const getStatusStyle = (status) => {
         switch (status?.toUpperCase()) {
             case 'PAID':
@@ -175,6 +199,7 @@ const Orders = () => {
                 )}
             </div>
 
+            {/* Slide-over Detail Modal */}
             {selectedOrder && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-end p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedOrder(null)} />
@@ -222,6 +247,7 @@ const Orders = () => {
                             </div>
                         </div>
 
+                        {/* Action Control Panel */}
                         <div className="p-10 bg-cyan-500 text-black rounded-b-[2.5rem]">
                             <div className="flex justify-between items-center">
                                 <div>
