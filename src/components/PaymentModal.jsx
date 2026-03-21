@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { X, CreditCard, Bitcoin, Building2, Copy, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { X, CreditCard, Bitcoin, Building2, Copy, CheckCircle2, Loader2, ShieldCheck, MapPin } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import api from "../services/api"; // 🎯 Use your interceptor-protected instance
 
 const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
     const { isDark } = useTheme();
@@ -10,46 +11,33 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
     const [bankStep, setBankStep] = useState("SELECT");     
     const [copied, setCopied] = useState(false);
     const [paymentDetails, setPaymentDetails] = useState(null);
+    
+    // Retrieve local registry context
+    const userEmail = localStorage.getItem("userEmail") || "mayowa.hyde@gmail.com";
 
-    // --- POLLING LOGIC ---
     useEffect(() => {
         let pollInterval;
-
-        // Only poll if we have a session ID and it's a manual method (Bank/Crypto)
         if (paymentDetails?.sessionId && selectedMethod !== "STRIPE") {
-            console.log("Polling started for reference:", paymentDetails.sessionId);
-
             pollInterval = setInterval(async () => {
                 try {
-                    const response = await fetch(`http://127.0.0.1:7082/payment/api/payments/status/${paymentDetails.sessionId}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log("Status Check:", data.status);
-
-                        // If status is PAID, redirect to success page
-                        if (data.status === "PAID" || data.status === "SUCCESS" || data.status === "COMPLETED") {
-                            clearInterval(pollInterval);
-                            onClose();
-                            window.location.href = `/payment/success?orderId=${paymentDetails.sessionId}`;
-                        }
+                    const response = await api.get(`/payment/api/payments/status/${paymentDetails.sessionId}`);
+                    if (response.data.status === "PAID" || response.data.status === "SUCCESS") {
+                        clearInterval(pollInterval);
+                        onClose();
+                        window.location.href = `/payment/success?orderId=${paymentDetails.sessionId}`;
                     }
                 } catch (error) {
-                    console.error("Polling error:", error);
+                    console.error("Polling sync lost:", error);
                 }
-            }, 5000); // 5 second intervals
+            }, 5000);
         }
-
-        // Cleanup: clear timer if user closes modal or switches methods
-        return () => {
-            if (pollInterval) clearInterval(pollInterval);
-        };
+        return () => { if (pollInterval) clearInterval(pollInterval); };
     }, [paymentDetails, selectedMethod, onClose]);
 
     if (!isOpen) return null;
 
-    const handleCopy = (textToCopy) => {
-        if (!textToCopy) return;
-        navigator.clipboard.writeText(textToCopy);
+    const handleCopy = (text) => {
+        navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -57,147 +45,159 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
     const initiatePayment = async (method) => {
         setIsProcessing(true);
         try {
-            const token = localStorage.getItem("token");
             const formattedItems = cartItems.map(item => ({
                 skuCode: item.skuCode,
                 productName: item.productName,
-                imageUrl: item.imageUrl,
                 unitPrice: item.unitPrice,
                 quantity: item.quantity
             }));
 
-            // 1. Create Order
-            const orderRes = await fetch("http://127.0.0.1:7082/order/api/orders", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...(token && { "Authorization": `Bearer ${token}` }) },
-                body: JSON.stringify({ userEmail: "mayowa.hyde@gmail.com", totalAmount, currency: "USD", paymentMethod: method, items: formattedItems })
+            // 1. Synchronize Order Registry
+            const orderRes = await api.post("/order/api/orders", {
+                userEmail, totalAmount, currency: "USD", paymentMethod: method, items: formattedItems
             });
-            if (!orderRes.ok) throw new Error("Order creation failed");
-            const orderData = await orderRes.json();
 
-            // 2. Initiate Payment
-            const payRes = await fetch("http://127.0.0.1:7082/payment/api/payments/initiate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", ...(token && { "Authorization": `Bearer ${token}` }) },
-                body: JSON.stringify({ orderId: orderData.orderNumber, userEmail: "mayowa.hyde@gmail.com", totalAmount, currency: "USD", paymentMethod: method, items: formattedItems })
+            // 2. Initialize Payment Gateway
+            const payRes = await api.post("/payment/api/payments/initiate", {
+                orderId: orderRes.data.orderNumber, userEmail, totalAmount, currency: "USD", paymentMethod: method, items: formattedItems
             });
-            if (!payRes.ok) throw new Error("Payment initiation failed");
-            const data = await payRes.json();
             
-            setPaymentDetails(data);
-            if (method === "STRIPE") window.location.href = data.paymentUrl;
+            setPaymentDetails(payRes.data);
+            if (method === "STRIPE") window.location.href = payRes.data.paymentUrl;
             else if (method === "CRYPTO") setCryptoStep("ADDRESS");
             else if (method === "BANK_TRANSFER") setBankStep("DETAILS");
-            setIsProcessing(false);
         } catch (err) {
-            alert(err.message);
+            console.error("Auth Failure:", err);
+        } finally {
             setIsProcessing(false);
         }
     };
 
-    const handleTabChange = (method) => {
-        setSelectedMethod(method);
-        setCryptoStep("SELECT");
-        setBankStep("SELECT");
-        setPaymentDetails(null);
-    };
-
     return (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className={`relative w-full max-w-3xl h-[560px] flex rounded-2xl shadow-2xl overflow-hidden ${isDark ? 'bg-[#0d1425] text-white border border-white/10' : 'bg-white text-gray-900'}`}>
+        <div className="fixed inset-0 z-[160] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+            
+            <div className={`relative w-full max-w-4xl h-[600px] flex rounded-[2rem] shadow-3xl overflow-hidden border transition-all duration-500 ${isDark ? 'bg-[#0a0f1d] border-white/10' : 'bg-white border-gray-200'}`}>
                 
-                {/* Sidebar */}
-                <div className={`w-1/3 p-6 flex flex-col border-r ${isDark ? 'bg-[#0a0f1d] border-white/5' : 'bg-gray-50 border-gray-100'}`}>
-                    <div className="mb-8 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-500 flex items-center justify-center font-black text-white">M</div>
-                        <div>
-                            <h3 className="font-black text-sm uppercase">MicroMart</h3>
-                            <div className="flex items-center gap-1 text-[9px] text-emerald-500 font-bold uppercase"><ShieldCheck size={10} /> Secure</div>
+                {/* Tactical Sidebar: Logistics & Methods */}
+                <div className={`w-[320px] p-8 flex flex-col border-r ${isDark ? 'bg-black/20 border-white/5' : 'bg-gray-50 border-gray-100'}`}>
+                    <header className="mb-10">
+                        <div className="flex items-center gap-2 mb-1">
+                            <ShieldCheck size={14} className="text-cyan-500" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-500">Secure Vault</span>
                         </div>
-                    </div>
-                    <div className="space-y-2">
-                        {[{id:"STRIPE", label:"Card", icon:<CreditCard size={18}/>}, {id:"CRYPTO", label:"Crypto", icon:<Bitcoin size={18}/>}, {id:"BANK_TRANSFER", label:"Bank", icon:<Building2 size={18}/>}].map(m => (
-                            <button key={m.id} onClick={() => handleTabChange(m.id)} className={`w-full flex items-center gap-3 p-4 rounded-xl text-sm font-bold transition-all ${selectedMethod === m.id ? 'bg-cyan-500 text-white shadow-lg' : 'opacity-50 hover:opacity-100'}`}>
-                                {m.icon} {m.label}
+                        <h3 className="text-xl font-black uppercase italic tracking-tight">Authorization</h3>
+                    </header>
+
+                    {/* Method Selector */}
+                    <nav className="space-y-3 mb-10">
+                        {[{id:"STRIPE", label:"Global Card", icon:<CreditCard size={16}/>}, 
+                          {id:"CRYPTO", label:"Crypto Asset", icon:<Bitcoin size={16}/>}, 
+                          {id:"BANK_TRANSFER", label:"Local Wire", icon:<Building2 size={16}/>}].map(m => (
+                            <button 
+                                key={m.id} 
+                                onClick={() => setSelectedMethod(m.id)} 
+                                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${selectedMethod === m.id ? 'bg-cyan-500 border-cyan-500 text-black shadow-[0_10px_30px_rgba(6,182,212,0.3)]' : 'border-transparent opacity-40 hover:opacity-100 font-bold'}`}
+                            >
+                                <span className="flex items-center gap-3 text-[11px] font-black uppercase tracking-widest">{m.icon} {m.label}</span>
+                                {selectedMethod === m.id && <div className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />}
                             </button>
                         ))}
+                    </nav>
+
+                    {/* Logistics Summary Integration */}
+                    <div className="mt-auto pt-6 border-t border-white/5">
+                        <div className="flex items-center gap-2 mb-3 opacity-40">
+                            <MapPin size={12} />
+                            <span className="text-[9px] font-black uppercase tracking-widest">Destination Registry</span>
+                        </div>
+                        <p className="text-[10px] font-bold text-gray-500 leading-relaxed uppercase tracking-tighter italic">
+                            Verified Shipping Coordinates Active. Final logistics reflection applied at checkout.
+                        </p>
                     </div>
                 </div>
 
-                {/* Content Area */}
-                <div className="w-2/3 p-8 relative flex flex-col overflow-y-auto">
-                    <button onClick={onClose} className="absolute top-6 right-6 opacity-40 hover:opacity-100"><X size={20} /></button>
-                    <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
-                        
+                {/* Content HUD */}
+                <div className="flex-1 p-10 relative flex flex-col items-center justify-center">
+                    <button onClick={onClose} className="absolute top-8 right-8 p-2 rounded-full hover:bg-white/5 transition-colors opacity-40"><X size={20} /></button>
+                    
+                    <div className="w-full max-w-sm">
                         {selectedMethod === "STRIPE" && (
-                            <div className="text-center space-y-6">
-                                <h2 className="text-4xl font-black">${totalAmount.toFixed(2)}</h2>
-                                <button onClick={() => initiatePayment("STRIPE")} disabled={isProcessing} className="w-full py-4 rounded-xl bg-cyan-500 text-white font-bold flex justify-center gap-2">
-                                    {isProcessing ? <Loader2 className="animate-spin" size={18} /> : 'CHECKOUT WITH CARD'}
+                            <div className="text-center animate-in fade-in zoom-in-95 duration-500">
+                                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500 mb-2 block">Total Deployment Value</span>
+                                <h2 className="text-7xl font-black tracking-tighter italic mb-10">${totalAmount.toFixed(2)}</h2>
+                                <button onClick={() => initiatePayment("STRIPE")} disabled={isProcessing} className="w-full py-5 rounded-2xl bg-white text-black text-[11px] font-black uppercase tracking-[0.3em] hover:bg-cyan-500 transition-all flex items-center justify-center gap-3">
+                                    {isProcessing ? <Loader2 className="animate-spin" size={18} /> : <>INITIALIZE STRIPE SECURE <CreditCard size={14}/></>}
                                 </button>
                             </div>
                         )}
 
                         {selectedMethod === "CRYPTO" && (
-                            <div className="w-full text-center">
+                            <div className="text-center">
                                 {cryptoStep === "SELECT" ? (
-                                    <div className="space-y-6">
-                                        <h2 className="text-3xl font-black">${totalAmount.toFixed(2)}</h2>
-                                        <button onClick={() => initiatePayment("CRYPTO")} disabled={isProcessing} className="w-full py-4 rounded-xl bg-cyan-500 text-white font-bold flex justify-center gap-2">
-                                            {isProcessing ? <Loader2 className="animate-spin" size={18} /> : 'GENERATE WALLET'}
+                                    <div className="animate-in fade-in duration-500">
+                                        <h2 className="text-5xl font-black italic mb-10">${totalAmount.toFixed(2)}</h2>
+                                        <button onClick={() => initiatePayment("CRYPTO")} disabled={isProcessing} className="w-full py-5 rounded-2xl bg-cyan-500 text-black text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3">
+                                            {isProcessing ? <Loader2 className="animate-spin" /> : "GENERATE WALLET ADDRESS"}
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                                        <div className="bg-white p-3 rounded-xl inline-block shadow-sm"><img src={paymentDetails?.paymentUrl} alt="QR" className="w-32 h-32" /></div>
-                                        <div className={`p-5 rounded-2xl border text-left ${isDark ? 'bg-black/20 border-white/10' : 'bg-gray-50 border-gray-200'}`}>
-                                            <p className="text-[11px] leading-relaxed whitespace-pre-line font-bold opacity-80">{paymentDetails?.instructions}</p>
-                                            <div className="pt-3 border-t border-white/5 flex justify-between items-center">
-                                                <div><p className="text-[9px] font-bold text-cyan-500 uppercase">System Reference</p><p className="font-mono text-xs truncate max-w-[180px] font-bold">{paymentDetails?.sessionId}</p></div>
-                                                <button onClick={() => handleCopy(paymentDetails?.sessionId)} className="p-2 text-cyan-500 hover:bg-cyan-500/10 rounded-lg"><Copy size={16} /></button>
+                                    <div className="space-y-6 animate-in slide-in-from-bottom-6 duration-500">
+                                        <div className="bg-white p-4 rounded-3xl inline-block shadow-2xl border-4 border-cyan-500/20"><img src={paymentDetails?.paymentUrl} alt="QR" className="w-36 h-36" /></div>
+                                        <div className="bg-black/40 border border-white/5 p-6 rounded-2xl text-left space-y-4">
+                                            <p className="text-[11px] font-mono leading-relaxed opacity-60 text-cyan-200 uppercase">{paymentDetails?.instructions}</p>
+                                            <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                                                <div className="overflow-hidden">
+                                                    <p className="text-[9px] font-black text-cyan-500 uppercase mb-1">TX-ID Reference</p>
+                                                    <p className="font-mono text-xs truncate text-white">{paymentDetails?.sessionId}</p>
+                                                </div>
+                                                <button onClick={() => handleCopy(paymentDetails?.sessionId)} className="p-3 bg-white/5 hover:bg-cyan-500/20 rounded-xl text-cyan-500"><Copy size={16} /></button>
                                             </div>
                                         </div>
-                                        <div className="flex items-center justify-center gap-2 text-[10px] opacity-40 uppercase font-black"><Loader2 size={12} className="animate-spin" /> Verifying Transfer</div>
+                                        <div className="flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 animate-pulse">
+                                            <Loader2 size={12} className="animate-spin" /> Synchronizing network reflection...
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         )}
 
                         {selectedMethod === "BANK_TRANSFER" && (
-                            <div className="w-full">
+                            <div className="text-center">
                                 {bankStep === "SELECT" ? (
-                                    <div className="text-center space-y-6">
-                                        <h2 className="text-3xl font-black">${totalAmount.toFixed(2)}</h2>
-                                        <button onClick={() => initiatePayment("BANK_TRANSFER")} disabled={isProcessing} className="w-full py-4 rounded-xl bg-cyan-500 text-white font-bold flex justify-center gap-2">
-                                            {isProcessing ? <Loader2 className="animate-spin" size={18} /> : 'GENERATE VIRTUAL ACCOUNT'}
+                                    <div className="animate-in fade-in duration-500">
+                                        <h2 className="text-5xl font-black italic mb-10">${totalAmount.toFixed(2)}</h2>
+                                        <button onClick={() => initiatePayment("BANK_TRANSFER")} disabled={isProcessing} className="w-full py-5 rounded-2xl bg-cyan-500 text-black text-[11px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-3">
+                                            {isProcessing ? <Loader2 className="animate-spin" /> : "ASSIGN VIRTUAL ACCOUNT"}
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                                        <div className={`p-6 rounded-2xl border-2 border-dashed ${isDark ? 'bg-cyan-500/5 border-cyan-500/20' : 'bg-gray-50 border-gray-200'}`}>
-                                            <div className="flex justify-between items-start mb-6"><Building2 className="text-cyan-500" size={24} /><span className="text-[10px] font-black bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded tracking-tighter">VIRTUAL ACCOUNT</span></div>
-                                            <div className="space-y-4">
-                                                <div><p className="text-[10px] uppercase opacity-50 font-bold">Receiving Bank</p><p className="font-bold text-sm">Mayorman Microfinance Bank</p></div>
+                                    <div className="space-y-6 animate-in slide-in-from-bottom-6 duration-500">
+                                        <div className="bg-black/40 border-2 border-dashed border-cyan-500/30 p-8 rounded-3xl text-left">
+                                            <div className="flex justify-between items-start mb-6"><Building2 className="text-cyan-500" size={32} /><span className="text-[9px] font-black bg-cyan-500 text-black px-3 py-1 rounded-full tracking-widest uppercase">Direct Wire</span></div>
+                                            <div className="space-y-5">
+                                                <div><p className="text-[9px] uppercase font-black opacity-30 tracking-widest">Bank Entity</p><p className="font-black text-lg tracking-tight uppercase italic">Mayorman Microfinance</p></div>
                                                 <div className="flex justify-between items-end">
-                                                    <div><p className="text-[10px] uppercase opacity-50 font-bold">Account Number</p><p className="font-mono text-2xl font-black text-cyan-500 tracking-widest">0127753007</p></div>
-                                                    <button onClick={() => handleCopy("0127753007")} className="p-2 text-cyan-500 hover:bg-cyan-500/10 rounded-lg"><Copy size={20} /></button>
+                                                    <div><p className="text-[9px] uppercase font-black opacity-30 tracking-widest">Asset Account</p><p className="font-mono text-3xl font-black text-cyan-500 tracking-widest">0127753007</p></div>
+                                                    <button onClick={() => handleCopy("0127753007")} className="p-3 bg-white/5 rounded-xl text-cyan-500"><Copy size={20} /></button>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className={`p-4 rounded-xl border ${isDark ? 'bg-black/40 border-white/5' : 'bg-white shadow-sm'}`}>
-                                            <div className="flex justify-between items-center">
-                                                <div><p className="text-[9px] font-bold opacity-50 uppercase">Payment Reference (Required)</p><p className="font-mono font-bold text-sm text-cyan-500 uppercase">{paymentDetails?.sessionId}</p></div>
-                                                <button onClick={() => handleCopy(paymentDetails?.sessionId)}>{copied ? <CheckCircle2 className="text-emerald-500" size={18} /> : <Copy size={18} className="opacity-50" />}</button>
-                                            </div>
+                                        <div className="bg-black/20 border border-white/5 p-4 rounded-xl flex justify-between items-center text-left">
+                                            <div><p className="text-[8px] font-black opacity-30 uppercase mb-1">Payment ID</p><p className="font-mono text-xs font-bold text-cyan-500">{paymentDetails?.sessionId}</p></div>
+                                            <button onClick={() => handleCopy(paymentDetails?.sessionId)} className="text-cyan-500">{copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}</button>
                                         </div>
-                                        <div className="flex items-center justify-center gap-2 text-[10px] opacity-40 uppercase font-black"><Loader2 size={12} className="animate-spin" /> Awaiting network reflection</div>
                                     </div>
                                 )}
                             </div>
                         )}
                     </div>
-                    <div className="mt-auto pt-4 text-center border-t border-white/5 opacity-30 text-[9px] uppercase font-bold">Vault Secure Processing <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse ml-1" /></div>
+                    
+                    <footer className="absolute bottom-10 inset-x-0 flex flex-col items-center gap-2">
+                        <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
+                            <ShieldCheck size={12} className="text-emerald-500" /> Layer 7 End-to-End Encryption Active
+                        </div>
+                    </footer>
                 </div>
             </div>
         </div>

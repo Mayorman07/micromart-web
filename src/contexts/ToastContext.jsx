@@ -36,8 +36,9 @@ export const ToastProvider = ({ children }) => {
                         `}
                     >
                         <div className="flex flex-col gap-1">
+                            {/* Updated Meta-header Labels */}
                             <span className="text-[8px] font-black uppercase tracking-[0.5em] opacity-30">
-                                {toast.type === 'success' ? 'Registry Synchronized' : 'System Exception'}
+                                {toast.type === 'success' ? 'Inventory' : 'System Alert'}
                             </span>
                             <span className="text-[11px] font-bold uppercase tracking-widest font-mono italic">
                                 {toast.message}
