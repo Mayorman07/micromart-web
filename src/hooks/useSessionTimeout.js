@@ -21,7 +21,7 @@ export const useSessionTimeout = () => {
 
                 // Warning threshold: 2 minutes (120,000 ms)
                 if (timeLeft <= 120000 && timeLeft > 0 && !warningShown) {
-                    showToast("Security Alert: Session expiring in 120s. Please save your work.", "error");
+                    showToast("Security Alert: Session expiring in 120s. Please save your progress.", "error");
                     setWarningShown(true);
                 }
 
