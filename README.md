@@ -1,32 +1,37 @@
-🛒 MicroMart Web: High-Performance E-Commerce Interface
+# 🛒 MicroMart Web: Enterprise E-Commerce Client
 
-MicroMart Web is the premium frontend consumer for the MicroMart Microservices ecosystem. It is a sophisticated Single Page Application (SPA) designed with a focus on Visual Depth, Role-Based Routing, and Admin Orchestration. Featuring a custom "Liquid" theme engine and a full suite of administrative tools, it provides a high-fidelity experience for both customers and platform operators.
+[![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.x-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Context API](https://img.shields.io/badge/State-Context_API-blue)](https://react.dev/learn/passing-data-deeply-with-context)
+[![Axios](https://img.shields.io/badge/Network-Axios-5A29E4?logo=axios&logoColor=white)](https://axios-http.com/)
 
-✨ Key Technical Features
+**MicroMart Web** is the premium frontend interface for the MicroMart distributed microservices ecosystem. Built as a high-performance Single Page Application (SPA), it features a highly modular architecture, role-based layout rendering, and a custom "Liquid" theme engine. It provides an immersive shopping experience for users and a robust command center for platform administrators.
 
-🎨 Dual-Aesthetic Theme Engine: Implements a context-aware UI with multiple "Liquid Background" states (Dark, Deep, Vibrant) providing an immersive, high-end visual identity.
+---
 
-🔐 Advanced Auth Orchestration: Full lifecycle management including Email Verification, Password Recovery, and Session Timeout handling.
+## ✨ Key Technical Features
 
-🖥️ Admin Command Center: Dedicated dashboards for Product management, Inventory registries, and User auditing, separated by specialized Layout wrappers.
+* **🎨 Dual-Aesthetic Theme Engine:** Context-aware UI utilizing custom `LiquidBackground` components (Dark, Deep, Vibrant) to deliver a premium, animated visual identity without performance degradation.
+* **🔐 Advanced Auth Orchestration:** Comprehensive lifecycle management including dual login portals (User vs. Admin), Email Verification, Password Recovery, and an automated `useSessionTimeout` security hook.
+* **🖥️ Admin Command Center:** Dedicated management portal wrapped in an `AdminLayout`, featuring real-time Inventory Registries, User Auditing, and Payment dashboards.
+* **📦 Optimized Rendering:** Utilizes `TableSkeleton` loaders and deferred data fetching to maintain a high Frame Rate (FPS) and low Cumulative Layout Shift (CLS).
+* **💳 Agnostic Payment UI:** A custom `PaymentModal` interface that seamlessly connects to the API Gateway, handling Success/Cancel routing without leaking third-party SDKs into the UI layer.
 
-📦 Optimized Inventory Registry: Professional-grade tables with skeletons and real-time stock status monitoring.
+---
 
-💳 Polymorphic Payment UI: Integrated Stripe modal flow with specialized Success/Cancel routing and receipt handling.
+## 🏗️ Architecture & Component Strategy
 
-🏗️ Architecture & Patterns
+The application strictly adheres to the **Container/Presenter** and **Layout** design patterns. Routing is decoupled into specialized layout wrappers that automatically enforce Role-Based Access Control (RBAC) and UI consistency.
 
-Component Organization
-
-The project follows a modular "Pages & Views" architecture, ensuring that business logic is decoupled from presentational components.
-
+```mermaid
 graph TD
     %% Global Styles
     classDef layout fill:#198754,color:#fff,stroke:#146c43,stroke-width:2px;
     classDef page fill:#0d6efd,color:#fff,stroke:#0a58ca,stroke-width:2px;
     classDef context fill:#6f42c1,color:#fff,stroke:#59339d,stroke-width:2px;
 
-    App[App.js / Router] --> Contexts[Context Providers]
+    App[App.jsx / Main Router] --> Contexts[Context Providers]
     Contexts --> ThemeCtx[ThemeContext]
     Contexts --> ToastCtx[ToastContext]
     class ThemeCtx,ToastCtx context
@@ -37,63 +42,76 @@ graph TD
     Layouts --> AccountL[AccountLayout]
     class AdminL,UserL,AccountL layout
 
-    AdminL --> AdminPages[Inventory / UserList / AddProduct]
-    UserL --> DashboardPages[ProductGallery / Details / Orders]
-    AccountL --> AccountPages[Vouchers / ProfileSettings]
+    AdminL --> AdminPages[Inventory Registry / Add Product / User List]
+    UserL --> DashboardPages[Product Gallery / Checkout / Order Tracking]
+    AccountL --> AccountPages[Profile Settings / Vouchers]
     class AdminPages,DashboardPages,AccountPages page
+```
 
+---
 
-Engineering Design Patterns
+## 🛠️ Engineering Patterns
 
-Layout Pattern: Utilizes high-level layout components to provide consistent shells (Sidebars, Navs) for different user segments.
+* **Layout Pattern:** Abstracted UI shells (`UserLayout`, `AdminLayout`) that inject contextual sidebars and navigation bars based on the current user's role.
+* **Service Layer Pattern:** Network requests are centralized in `services/api.js`, utilizing Axios interceptors to automatically attach JWT tokens and handle 401 Unauthorized responses.
+* **Custom Hook Pattern:** Reusable behavioral logic extracted into hooks like `useSessionTimeout` to keep React components purely presentational.
+* **Global Context Pattern:** Lightweight global state management (`ThemeContext`, `ToastContext`) avoids the boilerplate overhead of Redux for UI-specific state.
 
-Custom Hook Pattern: Decouples session logic (e.g., useSessionTimeout) from the UI layer.
+---
 
-Context API: Manages global "Theming" and "Toasting" without the overhead of heavy state-management libraries.
+## 📂 Project Structure
 
-Service Layer Pattern: Centralizes all asynchronous communication in services/api.js for easier environment switching.
-
-📂 Project Structure
-
+```text
 src/
-├── components/      # UI Elements (PaymentModal, CartDrawer, LiquidBackgrounds)
-├── contexts/        # Global state (Theme, Toasts)
-├── data/            # Static datasets (Countries list, etc.)
-├── hooks/           # Reusable logic (useSessionTimeout)
-├── layouts/         # Layout Wrappers (Admin, User, Account)
-├── pages/           # High-level Views
-│   ├── admin/       # Inventory, Dashboards, and Management
-│   ├── Auth/        # Login, Signup, Reset Password, Verification
-│   ├── Dashboard/   # Product Gallery, Orders, Tracking
-│   └── Payment/     # Success and Cancellation states
-├── services/        # Centralized API (Axios) configuration
-└── views/           # Marketing/Specialty views (Offers)
+├── assets/          # Static media and global stylesheets
+├── components/      # Shared UI Elements (CartDrawer, Snowfall, Modals)
+├── contexts/        # Global Providers (Theme, Toast)
+├── data/            # Static constants (countries.js)
+├── hooks/           # Behavioral logic (useSessionTimeout)
+├── layouts/         # Structural wrappers (Account, Admin, User)
+├── pages/           # View-level component directories
+│   ├── Account/     # Voucher and Profile views
+│   ├── admin/       # Dashboards, Inventory, Users
+│   ├── Auth/        # Login, Signup, Reset Password
+│   ├── Dashboard/   # Shopping views, Orders, Product Details
+│   ├── General/     # Checkout, Coming Soon placeholders
+│   └── Payment/     # Success and Cancel confirmation views
+├── services/        # Centralized Axios API configuration
+└── views/           # Marketing/Specialty view components
+```
 
+---
 
-🚀 Local Development Setup
+## 🚀 Local Development Setup
 
-1. Environment Configuration
-
-Create a .env file in the root directory:
-
+### **1. Environment Configuration**
+Create a `.env` file in the root directory to point to your local API Gateway:
+```env
 VITE_API_GATEWAY_URL=http://localhost:7082
-VITE_STRIPE_KEY=your_stripe_public_key
+```
 
+### **2. Installation & Execution**
+Ensure you have Node.js (v18+) installed.
 
-2. Installation & Execution
-
+```bash
 # Install dependencies
 npm install
 
-# Start the development server
+# Start the Vite development server with HMR
 npm run dev
+```
 
-
-3. Build for Production
-
+### **3. Production Build**
+```bash
+# Build optimized static assets
 npm run build
 
+# Preview the production build locally
+npm run preview
+```
 
-🎨 Visual System
+---
 
-The UI utilizes Tailwind CSS for a utility-first design approach, combined with custom CSS modules for high-fidelity animations like the Snowfall and LiquidBackground components, ensuring a "Premium" feel across all device sizes.
+## 🎨 UI/UX Design System
+
+The platform leverages **Tailwind CSS** for a highly responsive, utility-first design system. Specialized visual effects like `LiquidBackground` variants and `Snowfall` are implemented using a mix of pure CSS modules and React-driven DOM manipulation to ensure an engaging user experience across all device breakpoints.
