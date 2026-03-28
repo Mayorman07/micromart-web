@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || "http://127.0.0.1:7082";
+
 const api = axios.create({
-    baseURL: "http://127.0.0.1:7082"
+    baseURL: GATEWAY_URL
 });
 
 // Logic: Global lock variables
@@ -53,7 +55,7 @@ api.interceptors.response.use(
                 const refreshToken = localStorage.getItem("refreshToken");
                 
                 // Use a standard axios instance to avoid interceptor interference
-                axios.post("http://127.0.0.1:7082/users/users/refresh-token", { refreshToken })
+                axios.post(`${GATEWAY_URL}/users/users/refresh-token`, { refreshToken })
                     .then(({ data }) => {
                         const { accessToken, refreshToken: newRefreshToken } = data;
                         
