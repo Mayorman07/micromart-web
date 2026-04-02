@@ -244,6 +244,19 @@ const Signup = () => {
                         <ErrorFeedback fieldName="city" />
                     </div>
 
+                    {/* NEWLY ADDED FIELDS */}
+                    <div>
+                        <label className={labelStyle}>State / Province</label>
+                        <input name="state" placeholder="State" onChange={handleAddressChange} className={inputStyle('state')} />
+                        <ErrorFeedback fieldName="state" />
+                    </div>
+
+                    <div>
+                        <label className={labelStyle}>Zip / Postal Code</label>
+                        <input name="zipCode" placeholder="e.g. 100001" onChange={handleAddressChange} className={inputStyle('zipCode')} />
+                        <ErrorFeedback fieldName="zipCode" />
+                    </div>
+
                     {/* SUBMISSION CONTROL */}
                     <div className="col-span-2 mt-8">
                         {status === "error" && (
