@@ -49,7 +49,8 @@ const PaymentModal = ({ isOpen, onClose, cartItems, totalAmount }) => {
                 skuCode: item.skuCode,
                 productName: item.productName,
                 unitPrice: item.unitPrice,
-                quantity: item.quantity
+                quantity: item.quantity,
+                imageUrl: item.imageUrl
             }));
 
             // 1. Synchronize Order Registry
