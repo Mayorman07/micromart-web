@@ -8,6 +8,9 @@
 
 **MicroMart Web** is the premium frontend interface for the MicroMart distributed microservices ecosystem. Built as a high-performance Single Page Application (SPA), it features a highly modular architecture, role-based layout rendering, and a custom "Liquid" theme engine. It provides an immersive shopping experience for users and a robust command center for platform administrators.
 
+<img width="600" height="316" alt="MicromartUser" src="https://github.com/user-attachments/assets/650a13de-f701-4a64-9608-3054d29b41da" />
+
+
 ---
 
 ## ✨ Key Technical Features
@@ -15,6 +18,8 @@
 * **🎨 Dual-Aesthetic Theme Engine:** Context-aware UI utilizing custom `LiquidBackground` components (Dark, Deep, Vibrant) to deliver a premium, animated visual identity without performance degradation.
 * **🔐 Advanced Auth Orchestration:** Comprehensive lifecycle management including dual login portals (User vs. Admin), Email Verification, Password Recovery, and an automated `useSessionTimeout` security hook.
 * **🖥️ Admin Command Center:** Dedicated management portal wrapped in an `AdminLayout`, featuring real-time Inventory Registries, User Auditing, and Payment dashboards.
+  <img width="800" height="398" alt="MicromartAdmin" src="https://github.com/user-attachments/assets/fab350a5-bf42-4186-b85b-d9a9a6f6302e" />
+
 * **📦 Optimized Rendering:** Utilizes `TableSkeleton` loaders and deferred data fetching to maintain a high Frame Rate (FPS) and low Cumulative Layout Shift (CLS).
 * **💳 Agnostic Payment UI:** A custom `PaymentModal` interface that seamlessly connects to the API Gateway, handling Success/Cancel routing without leaking third-party SDKs into the UI layer.
 
